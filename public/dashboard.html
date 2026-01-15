@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Dashboard Keuangan</title>
+  <link rel="stylesheet" href="css/dashboard.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+<div class="page">
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="brand">
+      <div class="logo">💼</div>
+      <div>
+        <strong>Dashboard Keuangan</strong>
+        <div class="muted">Kelola keuangan Anda dengan mudah</div>
+      </div>
+    </div>
+    <button class="btn logout" onclick="logout()">Logout</button>
+  </header>
+
+  <!-- HERO / USER INFO -->
+  <section class="hero">
+    <div class="hero-left clickable" onclick="openProfileModal()">
+      <div class="avatar">👤</div>
+      <div class="user-info">
+        <strong id="username">User</strong>
+        <div class="muted" id="userEmail">email@example.com</div>
+      </div>
+    </div>
+    <div class="hero-right">
+      <div class="muted">Saldo Tersedia</div>
+      <h2 class="balance-amount"><span>Rp</span> <span id="balance">0</span></h2>
+    </div>
+  </section>
+
+  <!-- FILTER PERIODE -->
+  <section class="filter-section">
+    <span class="filter-label">Filter Periode</span>
+    <div class="filter-buttons">
+      <button class="filter-btn" data-filter="today" onclick="setFilter('today')">Hari Ini</button>
+      <button class="filter-btn" data-filter="week" onclick="setFilter('week')">7 Hari Terakhir</button>
+      <button class="filter-btn active" data-filter="month" onclick="setFilter('month')">Bulan Ini</button>
+    </div>
+  </section>
+
+  <!-- RINGKASAN -->
+  <section class="summary-section">
+    <h3 class="section-title" id="summaryTitle">Ringkasan Bulan Ini</h3>
+    <div class="summary">
+      <div class="chart-wrapper">
+        <canvas id="pieChart"></canvas>
+      </div>
+      <div class="summary-right">
+        <div class="summary-card green">
+          <div class="summary-icon">📈</div>
+          <div class="summary-info">
+            <span class="summary-label">Uang Masuk</span>
+            <strong class="summary-value"><span>Rp</span> <span id="income">0</span></strong>
+          </div>
+          <span class="summary-percent" id="incomePercent">0%</span>
+        </div>
+
+        <div class="summary-card red">
+          <div class="summary-icon">📉</div>
+          <div class="summary-info">
+            <span class="summary-label">Uang Keluar</span>
+            <strong class="summary-value red-text"><span>Rp</span> <span id="expense">0</span></strong>
+          </div>
+          <span class="summary-percent" id="expensePercent">0%</span>
+        </div>
+
+        <div class="summary-card blue">
+          <div class="summary-info">
+            <span class="summary-label">Saldo Bersih</span>
+            <strong class="summary-value"><span>Rp</span> <span id="net">0</span></strong>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MAIN CONTENT -->
+  <section class="main">
+
+    <!-- TRANSAKSI -->
+    <div class="card">
+      <div class="card-header">
+        <strong>Transaksi</strong>
+        <button class="btn primary" onclick="openTransactionModal()">+ Tambah</button>
+      </div>
+      
+      <!-- Summary Boxes -->
+      <div class="card-summary">
+        <div class="mini-card green">
+          <div class="mini-icon">📈</div>
+          <span class="mini-label">Uang Masuk</span>
+          <strong class="mini-value green-text"><span>Rp</span> <span id="trxIncome">0</span></strong>
+        </div>
+        <div class="mini-card red">
+          <div class="mini-icon">📉</div>
+          <span class="mini-label">Uang Keluar</span>
+          <strong class="mini-value red-text"><span>Rp</span> <span id="trxExpense">0</span></strong>
+        </div>
+      </div>
+
+      <!-- Scrollable Transaction List -->
+      <div class="scroll-container" id="transactionScroll">
+        <ul class="trx-list" id="transactionList"></ul>
+      </div>
+    </div>
+
+    <!-- UTANG & PIUTANG -->
+    <div class="card">
+      <div class="card-header">
+        <strong>Utang & Piutang</strong>
+        <button class="btn primary" onclick="openDebtModal()">+ Tambah</button>
+      </div>
+
+      <!-- Summary Boxes -->
+      <div class="card-summary">
+        <div class="mini-card red">
+          <div class="mini-icon">📋</div>
+          <span class="mini-label">Total Utang</span>
+          <strong class="mini-value red-text"><span>Rp</span> <span id="totalDebt">0</span></strong>
+        </div>
+        <div class="mini-card green">
+          <div class="mini-icon">📋</div>
+          <span class="mini-label">Total Piutang</span>
+          <strong class="mini-value green-text"><span>Rp</span> <span id="totalReceivable">0</span></strong>
+        </div>
+      </div>
+
+      <!-- Scrollable Debt List -->
+      <div class="scroll-container" id="debtScroll">
+        <div id="debtList"></div>
+      </div>
+    </div>
+
+  </section>
+</div>
+
+<!-- TRANSACTION MODAL -->
+<div class="modal hidden" id="transactionModal">
+  <div class="modal-box">
+    <strong id="trxModalTitle">Tambah Transaksi</strong>
+
+    <label>Tipe</label>
+    <select id="trxType">
+      <option value="income">Uang Masuk</option>
+      <option value="expense">Uang Keluar</option>
+    </select>
+
+    <label>Jumlah</label>
+    <input id="trxAmount" type="number" placeholder="Jumlah" />
+    
+    <label>Kategori</label>
+    <input id="trxCategory" placeholder="Kategori (opsional)" />
+    
+    <label>Deskripsi</label>
+    <input id="trxNote" placeholder="Deskripsi" />
+    
+    <label>Tanggal</label>
+    <input id="trxDate" type="date" />
+
+    <div class="modal-actions">
+      <button class="btn" onclick="closeTransactionModal()">Batal</button>
+      <button class="btn primary" onclick="saveTransaction()">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- DEBT MODAL -->
+<div class="modal hidden" id="debtModal">
+  <div class="modal-box">
+    <strong id="debtModalTitle">Tambah Utang / Piutang</strong>
+
+    <label>Tipe</label>
+    <select id="debtType">
+      <option value="debt">Utang</option>
+      <option value="receivable">Piutang</option>
+    </select>
+
+    <label>Nama</label>
+    <input id="debtName" placeholder="Nama orang/instansi" />
+    
+    <label>Jumlah</label>
+    <input id="debtAmount" type="number" placeholder="Jumlah" />
+    
+    <label>Jatuh Tempo</label>
+    <input id="debtDueDate" type="date" />
+
+    <div class="modal-actions">
+      <button class="btn" onclick="closeDebtModal()">Batal</button>
+      <button class="btn primary" onclick="saveDebt()">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- PROFILE MODAL -->
+<div class="modal hidden" id="profileModal">
+  <div class="modal-box">
+    <strong>Edit Profil</strong>
+
+    <label>Nama</label>
+    <input id="profileName" placeholder="Nama lengkap" />
+    
+    <label>Email</label>
+    <input id="profileEmail" type="email" placeholder="Email" />
+    
+    <label>No. Handphone</label>
+    <input id="profilePhone" type="tel" placeholder="+62 xxx-xxxx-xxxx" />
+
+    <div class="modal-actions">
+      <button class="btn" onclick="closeProfileModal()">Batal</button>
+      <button class="btn primary" onclick="saveProfile()">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/dashboard.js"></script>
+
+</body>
+</html>

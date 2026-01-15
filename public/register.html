@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Daftar - Dashboard Keuangan</title>
+  <link rel="stylesheet" href="css/auth.css">
+</head>
+
+<body class="auth">
+
+<div class="auth-page">
+  <!-- LEFT: BRANDING -->
+  <div class="auth-brand">
+    <div class="brand-content">
+      <div class="brand-logo">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="2" y="4" width="20" height="16" rx="2"/>
+          <path d="M2 10h20"/>
+          <path d="M6 16h4"/>
+        </svg>
+      </div>
+      <h1>Dashboard Keuangan</h1>
+      <p>Kelola keuangan Anda dengan mudah</p>
+    </div>
+  </div>
+
+  <!-- RIGHT: FORM -->
+  <div class="auth-form-side">
+    <div class="auth-card">
+      <h2>Buat Akun</h2>
+
+      <form id="registerForm">
+        <div class="input-group">
+          <label>Nama Lengkap</label>
+          <div class="input-wrapper">
+            <span class="input-icon">👤</span>
+            <input id="name" type="text" placeholder="John Doe" required>
+          </div>
+        </div>
+
+        <div class="input-group">
+          <label>Email</label>
+          <div class="input-wrapper">
+            <span class="input-icon">✉</span>
+            <input id="email" type="email" placeholder="nama@email.com" required>
+          </div>
+        </div>
+
+        <div class="input-group">
+          <label>Password</label>
+          <div class="input-wrapper">
+            <span class="input-icon">🔒</span>
+            <input id="password" type="password" placeholder="Minimal 6 karakter" required minlength="6">
+            <button type="button" class="toggle-password" onclick="togglePassword()">👁</button>
+          </div>
+        </div>
+
+        <div class="input-group">
+          <label>Konfirmasi Password</label>
+          <div class="input-wrapper">
+            <span class="input-icon">🔒</span>
+            <input id="confirmPassword" type="password" placeholder="Ulangi password" required>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-primary" id="btnRegister">Daftar</button>
+      </form>
+
+      <p class="loading" id="loading">Mendaftar...</p>
+      <p id="error" class="error-text"></p>
+
+      <div class="auth-footer">
+        Sudah punya akun? <a href="login.html">Masuk</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="js/auth.js"></script>
+
+</body>
+</html>
