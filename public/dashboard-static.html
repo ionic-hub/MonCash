@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <title>Dashboard Keuangan</title>
   <link rel="stylesheet" href="css/dashboard.css" />
+  <link rel="stylesheet" href="css/modal.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="js/config.js"></script>
   <script src="js/sheets-db.js"></script>
@@ -147,7 +148,7 @@
 </div>
 
 <!-- TRANSACTION MODAL -->
-<div class="modal" id="transactionModal">
+<div class="modal hidden" id="transactionModal">
   <div class="modal-box">
     <strong id="modalTitle">Tambah Transaksi</strong>
 
@@ -174,7 +175,7 @@
 </div>
 
 <!-- DEBT MODAL -->
-<div class="modal" id="debtModal">
+<div class="modal hidden" id="debtModal">
   <div class="modal-box">
     <strong id="debtModalTitle">Tambah Utang/Piutang</strong>
 
@@ -201,7 +202,7 @@
 </div>
 
 <!-- PROFILE MODAL -->
-<div class="modal" id="profileModal">
+<div class="modal hidden" id="profileModal">
   <div class="modal-box">
     <strong>Edit Profil</strong>
 

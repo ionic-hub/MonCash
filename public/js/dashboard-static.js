@@ -232,7 +232,7 @@ function openAddTransaction() {
   document.getElementById('trxAmount').value = '';
   document.getElementById('trxNote').value = '';
   document.getElementById('trxDate').value = new Date().toISOString().split('T')[0];
-  document.getElementById('transactionModal').classList.add('active');
+  document.getElementById('transactionModal').classList.remove('hidden');
 }
 
 function openEditTransaction(id, type, amount, note, date) {
@@ -242,7 +242,7 @@ function openEditTransaction(id, type, amount, note, date) {
   document.getElementById('trxAmount').value = amount;
   document.getElementById('trxNote').value = note;
   document.getElementById('trxDate').value = date || new Date().toISOString().split('T')[0];
-  document.getElementById('transactionModal').classList.add('active');
+  document.getElementById('transactionModal').classList.remove('hidden');
 }
 
 async function saveTransaction() {
@@ -294,7 +294,7 @@ function openAddDebt() {
   document.getElementById('debtName').value = '';
   document.getElementById('debtAmount').value = '';
   document.getElementById('debtDueDate').value = '';
-  document.getElementById('debtModal').classList.add('active');
+  document.getElementById('debtModal').classList.remove('hidden');
 }
 
 function openEditDebt(id, type, name, amount, dueDate) {
@@ -304,7 +304,7 @@ function openEditDebt(id, type, name, amount, dueDate) {
   document.getElementById('debtName').value = name;
   document.getElementById('debtAmount').value = amount;
   document.getElementById('debtDueDate').value = dueDate;
-  document.getElementById('debtModal').classList.add('active');
+  document.getElementById('debtModal').classList.remove('hidden');
 }
 
 async function saveDebt() {
@@ -362,7 +362,7 @@ function openProfileModal() {
   if (!currentUser) return;
   document.getElementById('profileName').value = currentUser.name;
   document.getElementById('profileEmail').value = currentUser.email;
-  document.getElementById('profileModal').classList.add('active');
+  document.getElementById('profileModal').classList.remove('hidden');
 }
 
 async function saveProfile() {
@@ -384,7 +384,7 @@ async function saveProfile() {
 // ======================
 
 function closeModal(id) {
-  document.getElementById(id).classList.remove('active');
+  document.getElementById(id).classList.add('hidden');
 }
 
 async function doLogout() {
