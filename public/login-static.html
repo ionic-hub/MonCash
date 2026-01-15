@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - Dashboard Keuangan</title>
+  <link rel="stylesheet" href="css/auth.css">
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script src="js/config.js"></script>
+  <script src="js/sheets-db.js"></script>
+  <script src="js/auth-client.js"></script>
+</head>
+
+<body class="auth">
+
+<div class="auth-page">
+  <!-- LEFT: BRANDING -->
+  <div class="auth-brand">
+    <div class="brand-content">
+      <div class="brand-logo">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="2" y="4" width="20" height="16" rx="2"/>
+          <path d="M2 10h20"/>
+          <path d="M6 16h4"/>
+        </svg>
+      </div>
+      <h1>Dashboard Keuangan</h1>
+      <p>Kelola keuangan Anda dengan mudah</p>
+    </div>
+  </div>
+
+  <!-- RIGHT: FORM -->
+  <div class="auth-form-side">
+    <div class="auth-card">
+      <h2>Masuk</h2>
+      <p style="color: #64748b; margin-bottom: 24px;">Gunakan akun Google untuk masuk</p>
+
+      <!-- Google Sign-In Button -->
+      <div id="google-signin-button" style="display: flex; justify-content: center;"></div>
+
+      <p id="error" class="error-text"></p>
+
+      <div class="auth-footer" style="margin-top: 40px;">
+        <small style="color: #94a3b8;">Dengan masuk, Anda menyetujui ketentuan layanan kami</small>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Check if already logged in
+  if (checkAuth()) {
+    window.location.href = 'dashboard.html';
+  }
+</script>
+
+</body>
+</html>

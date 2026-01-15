@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Dashboard Keuangan</title>
+  <link rel="stylesheet" href="css/dashboard.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/sheets-db.js"></script>
+  <script src="js/auth-client.js"></script>
+  <style>
+    .admin-badge {
+      background: #2563eb;
+      color: white;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      margin-left: 8px;
+    }
+    .status-badge.paid {
+      background: #29AB87;
+      color: white;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 11px;
+    }
+    .list-item.paid {
+      opacity: 0.6;
+    }
+  </style>
+</head>
+<body>
+
+<div class="page">
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="brand">
+      <div class="logo">💼</div>
+      <div>
+        <strong>Dashboard Keuangan</strong>
+        <div class="muted">Kelola keuangan Anda dengan mudah</div>
+      </div>
+    </div>
+    <button class="btn logout" onclick="doLogout()">Logout</button>
+  </header>
+
+  <!-- HERO / USER INFO -->
+  <section class="hero">
+    <div class="hero-left clickable" onclick="openProfileModal()">
+      <div class="avatar">👤</div>
+      <div class="user-info">
+        <strong id="username">User</strong>
+        <div class="muted" id="userEmail">email@example.com</div>
+      </div>
+    </div>
+    <div class="hero-right">
+      <div class="muted">Saldo Tersedia</div>
+      <h2 class="balance-amount"><span>Rp</span> <span id="balance">0</span></h2>
+    </div>
+  </section>
+
+  <!-- FILTER PERIODE -->
+  <section class="filter-section">
+    <span class="filter-label">Filter Periode</span>
+    <div class="filter-buttons">
+      <button class="filter-btn" data-filter="today">Hari Ini</button>
+      <button class="filter-btn" data-filter="week">7 Hari Terakhir</button>
+      <button class="filter-btn active" data-filter="month">Bulan Ini</button>
+    </div>
+  </section>
+
+  <!-- RINGKASAN -->
+  <section class="summary-section">
+    <h3 id="summaryTitle">Ringkasan Bulan Ini</h3>
+    <div class="summary-grid">
+      <!-- Chart Card -->
+      <div class="card chart-card">
+        <div class="chart-container">
+          <canvas id="pieChart"></canvas>
+          <div class="chart-center">
+            <span class="label">Net</span>
+            <span class="value" id="net">0</span>
+          </div>
+        </div>
+        <div class="chart-legends">
+          <div class="legend-item">
+            <span class="dot income"></span>
+            <span>Pemasukan</span>
+            <span id="incomePercent">0%</span>
+          </div>
+          <div class="legend-item">
+            <span class="dot expense"></span>
+            <span>Pengeluaran</span>
+            <span id="expensePercent">0%</span>
+          </div>
+        </div>
+      </div>
+      <!-- Income Card -->
+      <div class="card stat-card income-card">
+        <div class="stat-icon">↓</div>
+        <div class="stat-info">
+          <span class="stat-label">Pemasukan</span>
+          <span class="stat-value" id="income">0</span>
+        </div>
+      </div>
+      <!-- Expense Card -->
+      <div class="card stat-card expense-card">
+        <div class="stat-icon">↑</div>
+        <div class="stat-info">
+          <span class="stat-label">Pengeluaran</span>
+          <span class="stat-value" id="expense">0</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TRANSACTIONS & DEBTS -->
+  <section class="data-section">
+    <!-- TRANSACTIONS -->
+    <div class="card list-card">
+      <div class="card-header">
+        <h4>📊 Transaksi</h4>
+        <button class="btn small" onclick="openAddTransaction()">+ Tambah</button>
+      </div>
+      <div class="subheader">
+        <span>Pemasukan: <strong id="trxIncome">0</strong></span>
+        <span>Pengeluaran: <strong id="trxExpense">0</strong></span>
+      </div>
+      <div class="list-content" id="transactionList">
+        <!-- Transactions will be loaded here -->
+      </div>
+    </div>
+
+    <!-- DEBTS -->
+    <div class="card list-card">
+      <div class="card-header">
+        <h4>💳 Utang & Piutang</h4>
+        <button class="btn small" onclick="openAddDebt()">+ Tambah</button>
+      </div>
+      <div class="list-content" id="debtList">
+        <!-- Debts will be loaded here -->
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<!-- TRANSACTION MODAL -->
+<div class="modal" id="transactionModal">
+  <div class="modal-box">
+    <strong id="modalTitle">Tambah Transaksi</strong>
+
+    <label>Jenis</label>
+    <select id="trxType">
+      <option value="income">Pemasukan</option>
+      <option value="expense">Pengeluaran</option>
+    </select>
+
+    <label>Jumlah</label>
+    <input id="trxAmount" type="number" placeholder="0" />
+
+    <label>Catatan</label>
+    <input id="trxNote" placeholder="Keterangan" />
+
+    <label>Tanggal</label>
+    <input id="trxDate" type="date" />
+
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal('transactionModal')">Batal</button>
+      <button class="btn primary" onclick="saveTransaction()">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- DEBT MODAL -->
+<div class="modal" id="debtModal">
+  <div class="modal-box">
+    <strong id="debtModalTitle">Tambah Utang/Piutang</strong>
+
+    <label>Jenis</label>
+    <select id="debtType">
+      <option value="debt">Utang (Saya berhutang)</option>
+      <option value="receivable">Piutang (Orang berhutang ke saya)</option>
+    </select>
+
+    <label>Nama</label>
+    <input id="debtName" placeholder="Nama orang" />
+
+    <label>Jumlah</label>
+    <input id="debtAmount" type="number" placeholder="0" />
+
+    <label>Jatuh Tempo</label>
+    <input id="debtDueDate" type="date" />
+
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal('debtModal')">Batal</button>
+      <button class="btn primary" onclick="saveDebt()">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- PROFILE MODAL -->
+<div class="modal" id="profileModal">
+  <div class="modal-box">
+    <strong>Edit Profil</strong>
+
+    <label>Nama</label>
+    <input id="profileName" placeholder="Nama lengkap" />
+    
+    <label>Email (tidak bisa diubah)</label>
+    <input id="profileEmail" type="email" disabled />
+
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal('profileModal')">Batal</button>
+      <button class="btn primary" onclick="saveProfile()">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/dashboard-static.js"></script>
+
+</body>
+</html>
