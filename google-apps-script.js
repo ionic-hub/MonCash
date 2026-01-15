@@ -14,7 +14,7 @@
 //    - Who has access: Anyone
 // 7. Copy URL dan paste ke CONFIG.SHEETS_API_URL di config.js
 
-const SPREADSHEET_ID = 'YOUR_GOOGLE_SHEET_ID'; // GANTI DENGAN SHEET ID KAMU
+const SPREADSHEET_ID = '1WB1dPveW2OLfqLWBzrCzKT4oLjWSf4dY0xiX86iB5NA';
 
 // Sheet names
 const SHEETS = {
