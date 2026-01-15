@@ -86,6 +86,13 @@ function findRowById(sheetName, id) {
 // API HANDLERS
 // ======================
 
+// Handle CORS preflight
+function doOptions(e) {
+  return ContentService
+    .createTextOutput('')
+    .setMimeType(ContentService.MimeType.TEXT);
+}
+
 function doPost(e) {
   try {
     const payload = JSON.parse(e.postData.contents);

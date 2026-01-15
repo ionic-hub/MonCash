@@ -44,13 +44,23 @@ const SheetsDB = {
     try {
       const response = await fetch(CONFIG.SHEETS_API_URL, {
         method: 'POST',
+        mode: 'cors',
+        redirect: 'follow',
         headers: {
-          'Content-Type': 'text/plain', // Required for Apps Script CORS
+          'Content-Type': 'text/plain',
         },
         body: JSON.stringify(payload)
       });
       
-      const result = await response.json();
+      const text = await response.text();
+      let result;
+      
+      try {
+        result = JSON.parse(text);
+      } catch {
+        console.error('Failed to parse response:', text);
+        throw new Error('Invalid response from server');
+      }
       
       if (result.error) {
         throw new Error(result.error);
