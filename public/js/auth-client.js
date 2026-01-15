@@ -21,7 +21,7 @@ function handleCredentialResponse(response) {
   SheetsDB.init(user);
   
   // Redirect to dashboard
-  window.location.href = 'dashboard.html';
+  window.location.href = 'dashboard-static.html';
 }
 
 // Parse JWT token
@@ -69,7 +69,7 @@ function logout() {
     google.accounts.id.disableAutoSelect();
   }
   
-  window.location.href = 'login.html';
+  window.location.href = 'login-static.html';
 }
 
 // Initialize Google Sign-In on page load
