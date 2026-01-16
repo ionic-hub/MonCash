@@ -611,12 +611,28 @@ body {
 }
 
 /* RESPONSIVE */
-@media (max-width: 900px) {
-  .main {
-    grid-template-columns: 1fr;
+@media (max-width: 1024px) {
+  .page {
+    padding: 16px;
   }
   
   .summary {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  
+  .chart-wrapper {
+    min-height: 180px;
+  }
+  
+  .chart-wrapper canvas {
+    max-width: 180px;
+    max-height: 180px;
+  }
+}
+
+@media (max-width: 900px) {
+  .main {
     grid-template-columns: 1fr;
   }
   
@@ -633,5 +649,124 @@ body {
   .hero-right {
     width: 100%;
     text-align: center;
+  }
+}
+
+@media (max-width: 600px) {
+  .page {
+    padding: 12px;
+  }
+  
+  .header {
+    flex-direction: column;
+    gap: 16px;
+    text-align: center;
+  }
+  
+  .brand {
+    justify-content: center;
+  }
+  
+  .hero {
+    padding: 20px;
+    border-radius: 16px;
+  }
+  
+  .avatar {
+    width: 50px;
+    height: 50px;
+    font-size: 24px;
+  }
+  
+  .balance-amount {
+    font-size: 22px;
+  }
+  
+  .filter-buttons {
+    flex-wrap: wrap;
+  }
+  
+  .filter-btn {
+    flex: 1;
+    min-width: 100px;
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+  
+  .summary-card {
+    padding: 12px 16px;
+  }
+  
+  .summary-value {
+    font-size: 16px;
+  }
+  
+  .card-summary {
+    flex-direction: column;
+  }
+  
+  .mini-card {
+    width: 100%;
+  }
+  
+  .card-header {
+    flex-direction: column;
+    gap: 12px;
+    align-items: stretch;
+  }
+  
+  .card-header .btn {
+    width: 100%;
+  }
+  
+  .trx-list li {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  
+  .trx-right {
+    width: 100%;
+    justify-content: space-between;
+  }
+  
+  .debt-header {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .debt-actions {
+    flex-wrap: wrap;
+  }
+  
+  .btn-lunas {
+    flex: 1;
+    min-width: 120px;
+  }
+  
+  .modal-box {
+    width: 95%;
+    max-width: 400px;
+    margin: 16px;
+  }
+}
+
+@media (max-width: 400px) {
+  .page {
+    padding: 8px;
+  }
+  
+  .hero {
+    padding: 16px;
+  }
+  
+  .balance-amount {
+    font-size: 20px;
+  }
+  
+  .filter-btn {
+    min-width: 80px;
+    padding: 6px 10px;
+    font-size: 12px;
   }
 }
