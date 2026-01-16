@@ -3,6 +3,7 @@ let editTransactionId = null;
 let editDebtId = null;
 let currentFilter = 'month';
 let currentUser = null;
+let isSaving = false; // Prevent double-click
 
 // Format number with thousand separator
 function formatNumber(num) {
@@ -274,6 +275,8 @@ function openEditTransaction(id, type, amount, note, date) {
 }
 
 async function saveTransaction() {
+  if (isSaving) return; // Prevent double-click
+  
   const type = document.getElementById('trxType').value;
   const amount = parseFloat(document.getElementById('trxAmount').value);
   const description = document.getElementById('trxNote').value;
@@ -282,6 +285,13 @@ async function saveTransaction() {
   if (!amount || amount <= 0) {
     alert('Masukkan jumlah yang valid');
     return;
+  }
+
+  isSaving = true;
+  const saveBtn = document.querySelector('#transactionModal .btn-save');
+  if (saveBtn) {
+    saveBtn.disabled = true;
+    saveBtn.innerText = 'Menyimpan...';
   }
 
   try {
@@ -296,6 +306,12 @@ async function saveTransaction() {
     loadTransactions();
   } catch (error) {
     alert('Gagal menyimpan: ' + error.message);
+  } finally {
+    isSaving = false;
+    if (saveBtn) {
+      saveBtn.disabled = false;
+      saveBtn.innerText = 'Simpan';
+    }
   }
 }
 
@@ -336,6 +352,8 @@ function openEditDebt(id, type, name, amount, dueDate) {
 }
 
 async function saveDebt() {
+  if (isSaving) return; // Prevent double-click
+  
   const type = document.getElementById('debtType').value;
   const name = document.getElementById('debtName').value;
   const amount = parseFloat(document.getElementById('debtAmount').value);
@@ -344,6 +362,13 @@ async function saveDebt() {
   if (!name || !amount || amount <= 0) {
     alert('Isi semua field dengan benar');
     return;
+  }
+
+  isSaving = true;
+  const saveBtn = document.querySelector('#debtModal .btn-save');
+  if (saveBtn) {
+    saveBtn.disabled = true;
+    saveBtn.innerText = 'Menyimpan...';
   }
 
   try {
@@ -357,6 +382,12 @@ async function saveDebt() {
     loadDebts();
   } catch (error) {
     alert('Gagal menyimpan: ' + error.message);
+  } finally {
+    isSaving = false;
+    if (saveBtn) {
+      saveBtn.disabled = false;
+      saveBtn.innerText = 'Simpan';
+    }
   }
 }
 
