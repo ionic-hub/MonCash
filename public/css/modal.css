@@ -18,6 +18,13 @@
   width: 320px;
   border-radius: 12px;
   animation: pop 0.25s ease;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal-box.modal-large {
+  width: 90%;
+  max-width: 600px;
 }
 
 .modal-box strong {
@@ -38,6 +45,180 @@
   gap: 10px;
 }
 
+/* Report Filter */
+.report-filter {
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.report-filter label {
+  flex: 1;
+  min-width: 150px;
+}
+
+.report-filter input,
+.report-filter select {
+  margin-bottom: 0;
+}
+
+.report-filter .btn {
+  flex-shrink: 0;
+}
+
+/* Report Preview */
+.report-preview {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.report-preview.hidden {
+  display: none;
+}
+
+.report-header {
+  text-align: center;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #29AB87;
+}
+
+.report-header h2 {
+  margin: 0 0 4px;
+  color: #1e293b;
+  font-size: 18px;
+}
+
+.report-header p {
+  margin: 0;
+  color: #64748b;
+  font-size: 14px;
+}
+
+.report-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.report-summary-item {
+  background: white;
+  padding: 12px;
+  border-radius: 8px;
+  text-align: center;
+  border: 1px solid #e2e8f0;
+}
+
+.report-summary-item.income {
+  border-left: 4px solid #29AB87;
+}
+
+.report-summary-item.expense {
+  border-left: 4px solid #D5504E;
+}
+
+.report-summary-item.balance {
+  border-left: 4px solid #2563eb;
+}
+
+.report-summary-item.debt {
+  border-left: 4px solid #D5504E;
+}
+
+.report-summary-item.receivable {
+  border-left: 4px solid #29AB87;
+}
+
+.report-summary-item label {
+  display: block;
+  font-size: 12px;
+  color: #64748b;
+  margin-bottom: 4px;
+}
+
+.report-summary-item strong {
+  font-size: 16px;
+  color: #1e293b;
+}
+
+.report-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.report-table th,
+.report-table td {
+  padding: 8px;
+  text-align: left;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.report-table th {
+  background: #f1f5f9;
+  font-weight: 600;
+  color: #475569;
+}
+
+.report-table tr:last-child td {
+  border-bottom: none;
+}
+
+.report-table .income {
+  color: #29AB87;
+}
+
+.report-table .expense {
+  color: #D5504E;
+}
+
+.report-table .debt {
+  color: #D5504E;
+}
+
+.report-table .receivable {
+  color: #29AB87;
+}
+
+.report-table .paid {
+  color: #94a3b8;
+  text-decoration: line-through;
+}
+
+.report-footer {
+  text-align: center;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid #e2e8f0;
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+/* Report buttons in filter section */
+.report-buttons {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.btn.secondary {
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+}
+
+.btn.secondary:hover {
+  background: #e2e8f0;
+}
+
 @keyframes pop {
   from {
     transform: scale(0.9);
@@ -46,5 +227,34 @@
   to {
     transform: scale(1);
     opacity: 1;
+  }
+}
+
+/* Responsive for report modals */
+@media (max-width: 600px) {
+  .modal-box.modal-large {
+    width: 95%;
+    padding: 16px;
+  }
+  
+  .report-filter {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .report-filter .btn {
+    width: 100%;
+  }
+  
+  .report-buttons {
+    margin-left: 0;
+    margin-top: 10px;
+    width: 100%;
+  }
+  
+  .report-buttons .btn {
+    flex: 1;
+    font-size: 12px;
+    padding: 8px;
   }
 }

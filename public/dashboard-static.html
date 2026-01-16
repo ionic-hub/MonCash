@@ -50,6 +50,10 @@
       <button class="filter-btn" data-filter="week" onclick="setFilter('week')">7 Hari Terakhir</button>
       <button class="filter-btn active" data-filter="month" onclick="setFilter('month')">Bulan Ini</button>
     </div>
+    <div class="report-buttons">
+      <button class="btn secondary" onclick="openMonthlyReportModal()">📊 Rekap Bulanan</button>
+      <button class="btn secondary" onclick="openDebtReportModal()">📋 Rekap Utang/Piutang</button>
+    </div>
   </section>
 
   <!-- RINGKASAN -->
@@ -216,6 +220,60 @@
     <div class="modal-actions">
       <button class="btn" onclick="closeModal('profileModal')">Batal</button>
       <button class="btn primary" onclick="saveProfile()">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- MONTHLY REPORT MODAL -->
+<div class="modal hidden" id="monthlyReportModal">
+  <div class="modal-box modal-large">
+    <strong>📊 Rekap Bulanan</strong>
+    
+    <div class="report-filter">
+      <label>Pilih Bulan</label>
+      <input id="reportMonth" type="month" />
+      <button class="btn primary" onclick="generateMonthlyReport()">Lihat Rekap</button>
+    </div>
+    
+    <div id="monthlyReportPreview" class="report-preview hidden">
+      <!-- Preview will be rendered here -->
+    </div>
+    
+    <div id="monthlyReportActions" class="modal-actions hidden">
+      <button class="btn" onclick="closeModal('monthlyReportModal')">Tutup</button>
+      <button class="btn primary" onclick="sendMonthlyReportEmail()">📧 Kirim ke Email</button>
+    </div>
+    
+    <div id="monthlyReportClose" class="modal-actions">
+      <button class="btn" onclick="closeModal('monthlyReportModal')">Tutup</button>
+    </div>
+  </div>
+</div>
+
+<!-- DEBT REPORT MODAL -->
+<div class="modal hidden" id="debtReportModal">
+  <div class="modal-box modal-large">
+    <strong>📋 Rekap Utang/Piutang per Nama</strong>
+    
+    <div class="report-filter">
+      <label>Pilih Nama</label>
+      <select id="debtReportName">
+        <option value="">-- Pilih Nama --</option>
+      </select>
+      <button class="btn primary" onclick="generateDebtReport()">Lihat Rekap</button>
+    </div>
+    
+    <div id="debtReportPreview" class="report-preview hidden">
+      <!-- Preview will be rendered here -->
+    </div>
+    
+    <div id="debtReportActions" class="modal-actions hidden">
+      <button class="btn" onclick="closeModal('debtReportModal')">Tutup</button>
+      <button class="btn primary" onclick="sendDebtReportEmail()">📧 Kirim ke Email</button>
+    </div>
+    
+    <div id="debtReportClose" class="modal-actions">
+      <button class="btn" onclick="closeModal('debtReportModal')">Tutup</button>
     </div>
   </div>
 </div>

@@ -142,6 +142,14 @@ function doPost(e) {
         result = getSummary(userId, payload.startDate, payload.endDate);
         break;
         
+      // Reports
+      case 'sendMonthlyReport':
+        result = sendMonthlyReport(userEmail, payload);
+        break;
+      case 'sendDebtReport':
+        result = sendDebtReport(userEmail, payload);
+        break;
+        
       default:
         throw new Error('Unknown action: ' + action);
     }
@@ -368,4 +376,183 @@ function getSummary(userId, startDate, endDate) {
     expense,
     balance: income - expense
   };
+}
+
+// ======================
+// EMAIL REPORT FUNCTIONS
+// ======================
+
+function formatNumberForEmail(num) {
+  return num.toLocaleString('id-ID');
+}
+
+function formatDateForEmail(dateStr) {
+  if (!dateStr) return '-';
+  const d = new Date(dateStr);
+  return d.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
+
+function sendMonthlyReport(userEmail, data) {
+  const { month, year, income, expense, balance, transactions } = data;
+  
+  // Build email HTML
+  let transactionRows = '';
+  if (transactions && transactions.length > 0) {
+    transactions.forEach(t => {
+      const isIncome = t.type === 'income';
+      const amount = parseFloat(t.amount) || 0;
+      transactionRows += `
+        <tr>
+          <td style="padding:8px;border-bottom:1px solid #e2e8f0;">${formatDateForEmail(t.date)}</td>
+          <td style="padding:8px;border-bottom:1px solid #e2e8f0;">${t.description || '-'}</td>
+          <td style="padding:8px;border-bottom:1px solid #e2e8f0;">${isIncome ? 'Masuk' : 'Keluar'}</td>
+          <td style="padding:8px;border-bottom:1px solid #e2e8f0;color:${isIncome ? '#29AB87' : '#D5504E'};">${isIncome ? '+' : '-'}Rp ${formatNumberForEmail(amount)}</td>
+        </tr>
+      `;
+    });
+  } else {
+    transactionRows = '<tr><td colspan="4" style="padding:20px;text-align:center;color:#94a3b8;">Tidak ada transaksi</td></tr>';
+  }
+  
+  const htmlBody = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="UTF-8">
+    </head>
+    <body style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;">
+      <div style="text-align:center;padding:20px;border-bottom:3px solid #29AB87;">
+        <h1 style="margin:0;color:#1e293b;">📊 Rekap Keuangan</h1>
+        <p style="margin:8px 0 0;color:#64748b;">${month} ${year}</p>
+      </div>
+      
+      <div style="display:flex;gap:10px;margin:20px 0;">
+        <div style="flex:1;background:#f0fdf4;padding:15px;border-radius:8px;border-left:4px solid #29AB87;">
+          <p style="margin:0;font-size:12px;color:#64748b;">Total Pemasukan</p>
+          <p style="margin:4px 0 0;font-size:18px;font-weight:bold;color:#29AB87;">Rp ${formatNumberForEmail(income)}</p>
+        </div>
+        <div style="flex:1;background:#fef2f2;padding:15px;border-radius:8px;border-left:4px solid #D5504E;">
+          <p style="margin:0;font-size:12px;color:#64748b;">Total Pengeluaran</p>
+          <p style="margin:4px 0 0;font-size:18px;font-weight:bold;color:#D5504E;">Rp ${formatNumberForEmail(expense)}</p>
+        </div>
+      </div>
+      
+      <div style="background:#eff6ff;padding:15px;border-radius:8px;border-left:4px solid #2563eb;margin-bottom:20px;">
+        <p style="margin:0;font-size:12px;color:#64748b;">Saldo Bersih</p>
+        <p style="margin:4px 0 0;font-size:20px;font-weight:bold;color:#2563eb;">Rp ${formatNumberForEmail(balance)}</p>
+      </div>
+      
+      <h3 style="margin:20px 0 10px;color:#1e293b;">Detail Transaksi</h3>
+      <table style="width:100%;border-collapse:collapse;font-size:14px;">
+        <thead>
+          <tr style="background:#f1f5f9;">
+            <th style="padding:10px;text-align:left;">Tanggal</th>
+            <th style="padding:10px;text-align:left;">Deskripsi</th>
+            <th style="padding:10px;text-align:left;">Tipe</th>
+            <th style="padding:10px;text-align:left;">Jumlah</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${transactionRows}
+        </tbody>
+      </table>
+      
+      <div style="text-align:center;margin-top:30px;padding-top:20px;border-top:1px solid #e2e8f0;">
+        <p style="margin:0;font-size:12px;color:#94a3b8;">Dibuat oleh MonCash • ${new Date().toLocaleDateString('id-ID')}</p>
+      </div>
+    </body>
+    </html>
+  `;
+  
+  GmailApp.sendEmail(userEmail, `Rekap Keuangan ${month} ${year} - MonCash`, '', {
+    htmlBody: htmlBody
+  });
+  
+  return { success: true };
+}
+
+function sendDebtReport(userEmail, data) {
+  const { name, debts, totalDebt, totalReceivable, unpaidDebt, unpaidReceivable } = data;
+  
+  // Build email HTML
+  let debtRows = '';
+  if (debts && debts.length > 0) {
+    debts.forEach(d => {
+      const isDebt = d.type === 'debt';
+      const isPaid = d.status === 'paid';
+      const amount = parseFloat(d.amount) || 0;
+      debtRows += `
+        <tr style="${isPaid ? 'color:#94a3b8;' : ''}">
+          <td style="padding:8px;border-bottom:1px solid #e2e8f0;">${isDebt ? 'Utang' : 'Piutang'}</td>
+          <td style="padding:8px;border-bottom:1px solid #e2e8f0;color:${isDebt ? '#D5504E' : '#29AB87'};">Rp ${formatNumberForEmail(amount)}</td>
+          <td style="padding:8px;border-bottom:1px solid #e2e8f0;">${d.due_date ? formatDateForEmail(d.due_date) : '-'}</td>
+          <td style="padding:8px;border-bottom:1px solid #e2e8f0;">${isPaid ? '✅ Lunas' : '⏳ Belum'}</td>
+        </tr>
+      `;
+    });
+  } else {
+    debtRows = '<tr><td colspan="4" style="padding:20px;text-align:center;color:#94a3b8;">Tidak ada data</td></tr>';
+  }
+  
+  const htmlBody = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="UTF-8">
+    </head>
+    <body style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;">
+      <div style="text-align:center;padding:20px;border-bottom:3px solid #29AB87;">
+        <h1 style="margin:0;color:#1e293b;">📋 Rekap Utang/Piutang</h1>
+        <p style="margin:8px 0 0;color:#64748b;">Atas nama: <strong>${name}</strong></p>
+      </div>
+      
+      <div style="display:flex;gap:10px;margin:20px 0;">
+        <div style="flex:1;background:#fef2f2;padding:15px;border-radius:8px;border-left:4px solid #D5504E;">
+          <p style="margin:0;font-size:12px;color:#64748b;">Total Utang</p>
+          <p style="margin:4px 0 0;font-size:18px;font-weight:bold;color:#D5504E;">Rp ${formatNumberForEmail(totalDebt)}</p>
+        </div>
+        <div style="flex:1;background:#f0fdf4;padding:15px;border-radius:8px;border-left:4px solid #29AB87;">
+          <p style="margin:0;font-size:12px;color:#64748b;">Total Piutang</p>
+          <p style="margin:4px 0 0;font-size:18px;font-weight:bold;color:#29AB87;">Rp ${formatNumberForEmail(totalReceivable)}</p>
+        </div>
+      </div>
+      
+      <div style="display:flex;gap:10px;margin-bottom:20px;">
+        <div style="flex:1;background:#fff;padding:15px;border-radius:8px;border:1px solid #fecaca;">
+          <p style="margin:0;font-size:12px;color:#64748b;">Utang Belum Lunas</p>
+          <p style="margin:4px 0 0;font-size:16px;font-weight:bold;color:#D5504E;">Rp ${formatNumberForEmail(unpaidDebt)}</p>
+        </div>
+        <div style="flex:1;background:#fff;padding:15px;border-radius:8px;border:1px solid #bbf7d0;">
+          <p style="margin:0;font-size:12px;color:#64748b;">Piutang Belum Lunas</p>
+          <p style="margin:4px 0 0;font-size:16px;font-weight:bold;color:#29AB87;">Rp ${formatNumberForEmail(unpaidReceivable)}</p>
+        </div>
+      </div>
+      
+      <h3 style="margin:20px 0 10px;color:#1e293b;">Detail Utang/Piutang</h3>
+      <table style="width:100%;border-collapse:collapse;font-size:14px;">
+        <thead>
+          <tr style="background:#f1f5f9;">
+            <th style="padding:10px;text-align:left;">Tipe</th>
+            <th style="padding:10px;text-align:left;">Jumlah</th>
+            <th style="padding:10px;text-align:left;">Jatuh Tempo</th>
+            <th style="padding:10px;text-align:left;">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${debtRows}
+        </tbody>
+      </table>
+      
+      <div style="text-align:center;margin-top:30px;padding-top:20px;border-top:1px solid #e2e8f0;">
+        <p style="margin:0;font-size:12px;color:#94a3b8;">Dibuat oleh MonCash • ${new Date().toLocaleDateString('id-ID')}</p>
+      </div>
+    </body>
+    </html>
+  `;
+  
+  GmailApp.sendEmail(userEmail, `Rekap Utang/Piutang - ${name} - MonCash`, '', {
+    htmlBody: htmlBody
+  });
+  
+  return { success: true };
 }

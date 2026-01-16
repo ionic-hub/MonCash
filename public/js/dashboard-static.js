@@ -477,4 +477,361 @@ document.addEventListener('DOMContentLoaded', () => {
     userInfo.style.cursor = 'pointer';
     userInfo.addEventListener('click', openProfileModal);
   }
+  
+  // Set default month for report
+  const reportMonthInput = document.getElementById('reportMonth');
+  if (reportMonthInput) {
+    const now = new Date();
+    reportMonthInput.value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  }
 });
+
+// ======================
+// MONTHLY REPORT
+// ======================
+
+let monthlyReportData = null;
+
+function openMonthlyReportModal() {
+  // Reset state
+  monthlyReportData = null;
+  document.getElementById('monthlyReportPreview').classList.add('hidden');
+  document.getElementById('monthlyReportActions').classList.add('hidden');
+  document.getElementById('monthlyReportClose').classList.remove('hidden');
+  
+  // Set current month
+  const now = new Date();
+  document.getElementById('reportMonth').value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  
+  document.getElementById('monthlyReportModal').classList.remove('hidden');
+}
+
+async function generateMonthlyReport() {
+  const monthValue = document.getElementById('reportMonth').value;
+  if (!monthValue) {
+    alert('Pilih bulan terlebih dahulu');
+    return;
+  }
+  
+  const [year, month] = monthValue.split('-');
+  const startDate = `${year}-${month}-01`;
+  const lastDay = new Date(year, month, 0).getDate();
+  const endDate = `${year}-${month}-${lastDay}`;
+  
+  try {
+    // Get transactions for the month
+    const transactions = await SheetsDB.getTransactions(startDate, endDate);
+    
+    // Calculate summary
+    let income = 0, expense = 0;
+    transactions.forEach(t => {
+      const amount = parseFloat(t.amount) || 0;
+      if (t.type === 'income') income += amount;
+      else expense += amount;
+    });
+    
+    const balance = income - expense;
+    const monthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 
+                        'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+    const monthName = monthNames[parseInt(month) - 1];
+    
+    // Store data for email
+    monthlyReportData = {
+      month: monthName,
+      year: year,
+      income: income,
+      expense: expense,
+      balance: balance,
+      transactions: transactions
+    };
+    
+    // Generate preview HTML
+    let html = `
+      <div class="report-header">
+        <h2>Rekap Keuangan</h2>
+        <p>${monthName} ${year}</p>
+      </div>
+      
+      <div class="report-summary">
+        <div class="report-summary-item income">
+          <label>Total Pemasukan</label>
+          <strong>Rp ${formatNumber(income)}</strong>
+        </div>
+        <div class="report-summary-item expense">
+          <label>Total Pengeluaran</label>
+          <strong>Rp ${formatNumber(expense)}</strong>
+        </div>
+        <div class="report-summary-item balance">
+          <label>Saldo Bersih</label>
+          <strong>Rp ${formatNumber(balance)}</strong>
+        </div>
+      </div>
+      
+      <table class="report-table">
+        <thead>
+          <tr>
+            <th>Tanggal</th>
+            <th>Deskripsi</th>
+            <th>Tipe</th>
+            <th>Jumlah</th>
+          </tr>
+        </thead>
+        <tbody>
+    `;
+    
+    if (transactions.length === 0) {
+      html += `<tr><td colspan="4" style="text-align:center;color:#94a3b8;">Tidak ada transaksi</td></tr>`;
+    } else {
+      transactions.forEach(t => {
+        const isIncome = t.type === 'income';
+        html += `
+          <tr>
+            <td>${formatDate(t.date)}</td>
+            <td>${t.description || '-'}</td>
+            <td>${isIncome ? 'Masuk' : 'Keluar'}</td>
+            <td class="${isIncome ? 'income' : 'expense'}">${isIncome ? '+' : '-'}Rp ${formatNumber(parseFloat(t.amount) || 0)}</td>
+          </tr>
+        `;
+      });
+    }
+    
+    html += `
+        </tbody>
+      </table>
+      
+      <div class="report-footer">
+        Dibuat oleh MonCash • ${new Date().toLocaleDateString('id-ID')}
+      </div>
+    `;
+    
+    document.getElementById('monthlyReportPreview').innerHTML = html;
+    document.getElementById('monthlyReportPreview').classList.remove('hidden');
+    document.getElementById('monthlyReportActions').classList.remove('hidden');
+    document.getElementById('monthlyReportClose').classList.add('hidden');
+    
+  } catch (error) {
+    alert('Gagal generate rekap: ' + error.message);
+  }
+}
+
+async function sendMonthlyReportEmail() {
+  if (!monthlyReportData) {
+    alert('Generate rekap terlebih dahulu');
+    return;
+  }
+  
+  if (!confirm(`Kirim rekap ${monthlyReportData.month} ${monthlyReportData.year} ke email ${currentUser.email}?`)) {
+    return;
+  }
+  
+  try {
+    const btn = document.querySelector('#monthlyReportActions .btn.primary');
+    btn.disabled = true;
+    btn.innerText = 'Mengirim...';
+    
+    await SheetsDB.sendMonthlyReport({
+      month: monthlyReportData.month,
+      year: monthlyReportData.year,
+      income: monthlyReportData.income,
+      expense: monthlyReportData.expense,
+      balance: monthlyReportData.balance,
+      transactions: monthlyReportData.transactions
+    });
+    
+    alert('Rekap berhasil dikirim ke email!');
+    closeModal('monthlyReportModal');
+    
+  } catch (error) {
+    alert('Gagal mengirim: ' + error.message);
+  } finally {
+    const btn = document.querySelector('#monthlyReportActions .btn.primary');
+    if (btn) {
+      btn.disabled = false;
+      btn.innerText = '📧 Kirim ke Email';
+    }
+  }
+}
+
+// ======================
+// DEBT REPORT
+// ======================
+
+let debtReportData = null;
+let allDebts = [];
+
+async function openDebtReportModal() {
+  // Reset state
+  debtReportData = null;
+  document.getElementById('debtReportPreview').classList.add('hidden');
+  document.getElementById('debtReportActions').classList.add('hidden');
+  document.getElementById('debtReportClose').classList.remove('hidden');
+  
+  // Load all debts and populate name dropdown
+  try {
+    allDebts = await SheetsDB.getDebts();
+    
+    // Get unique names
+    const names = [...new Set(allDebts.map(d => d.name).filter(n => n))];
+    
+    const select = document.getElementById('debtReportName');
+    select.innerHTML = '<option value="">-- Pilih Nama --</option>';
+    names.forEach(name => {
+      select.innerHTML += `<option value="${name}">${name}</option>`;
+    });
+    
+  } catch (error) {
+    console.error('Load debts error:', error);
+  }
+  
+  document.getElementById('debtReportModal').classList.remove('hidden');
+}
+
+async function generateDebtReport() {
+  const selectedName = document.getElementById('debtReportName').value;
+  if (!selectedName) {
+    alert('Pilih nama terlebih dahulu');
+    return;
+  }
+  
+  // Filter debts by name
+  const filteredDebts = allDebts.filter(d => d.name === selectedName);
+  
+  // Calculate totals
+  let totalDebt = 0, totalReceivable = 0;
+  let paidDebt = 0, paidReceivable = 0;
+  
+  filteredDebts.forEach(d => {
+    const amount = parseFloat(d.amount) || 0;
+    const isPaid = d.status === 'paid';
+    
+    if (d.type === 'debt') {
+      totalDebt += amount;
+      if (isPaid) paidDebt += amount;
+    } else {
+      totalReceivable += amount;
+      if (isPaid) paidReceivable += amount;
+    }
+  });
+  
+  // Store data for email
+  debtReportData = {
+    name: selectedName,
+    debts: filteredDebts,
+    totalDebt: totalDebt,
+    totalReceivable: totalReceivable,
+    paidDebt: paidDebt,
+    paidReceivable: paidReceivable,
+    unpaidDebt: totalDebt - paidDebt,
+    unpaidReceivable: totalReceivable - paidReceivable
+  };
+  
+  // Generate preview HTML
+  let html = `
+    <div class="report-header">
+      <h2>Rekap Utang/Piutang</h2>
+      <p>Atas nama: <strong>${selectedName}</strong></p>
+    </div>
+    
+    <div class="report-summary">
+      <div class="report-summary-item debt">
+        <label>Total Utang</label>
+        <strong>Rp ${formatNumber(totalDebt)}</strong>
+      </div>
+      <div class="report-summary-item receivable">
+        <label>Total Piutang</label>
+        <strong>Rp ${formatNumber(totalReceivable)}</strong>
+      </div>
+    </div>
+    
+    <div class="report-summary">
+      <div class="report-summary-item debt">
+        <label>Utang Belum Lunas</label>
+        <strong>Rp ${formatNumber(totalDebt - paidDebt)}</strong>
+      </div>
+      <div class="report-summary-item receivable">
+        <label>Piutang Belum Lunas</label>
+        <strong>Rp ${formatNumber(totalReceivable - paidReceivable)}</strong>
+      </div>
+    </div>
+    
+    <table class="report-table">
+      <thead>
+        <tr>
+          <th>Tipe</th>
+          <th>Jumlah</th>
+          <th>Jatuh Tempo</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+  `;
+  
+  if (filteredDebts.length === 0) {
+    html += `<tr><td colspan="4" style="text-align:center;color:#94a3b8;">Tidak ada data</td></tr>`;
+  } else {
+    filteredDebts.forEach(d => {
+      const isDebt = d.type === 'debt';
+      const isPaid = d.status === 'paid';
+      html += `
+        <tr class="${isPaid ? 'paid' : ''}">
+          <td>${isDebt ? 'Utang' : 'Piutang'}</td>
+          <td class="${isDebt ? 'debt' : 'receivable'}">Rp ${formatNumber(parseFloat(d.amount) || 0)}</td>
+          <td>${d.due_date ? formatDate(d.due_date) : '-'}</td>
+          <td>${isPaid ? '✅ Lunas' : '⏳ Belum Lunas'}</td>
+        </tr>
+      `;
+    });
+  }
+  
+  html += `
+      </tbody>
+    </table>
+    
+    <div class="report-footer">
+      Dibuat oleh MonCash • ${new Date().toLocaleDateString('id-ID')}
+    </div>
+  `;
+  
+  document.getElementById('debtReportPreview').innerHTML = html;
+  document.getElementById('debtReportPreview').classList.remove('hidden');
+  document.getElementById('debtReportActions').classList.remove('hidden');
+  document.getElementById('debtReportClose').classList.add('hidden');
+}
+
+async function sendDebtReportEmail() {
+  if (!debtReportData) {
+    alert('Generate rekap terlebih dahulu');
+    return;
+  }
+  
+  if (!confirm(`Kirim rekap utang/piutang ${debtReportData.name} ke email ${currentUser.email}?`)) {
+    return;
+  }
+  
+  try {
+    const btn = document.querySelector('#debtReportActions .btn.primary');
+    btn.disabled = true;
+    btn.innerText = 'Mengirim...';
+    
+    await SheetsDB.sendDebtReport({
+      name: debtReportData.name,
+      debts: debtReportData.debts,
+      totalDebt: debtReportData.totalDebt,
+      totalReceivable: debtReportData.totalReceivable,
+      unpaidDebt: debtReportData.unpaidDebt,
+      unpaidReceivable: debtReportData.unpaidReceivable
+    });
+    
+    alert('Rekap berhasil dikirim ke email!');
+    closeModal('debtReportModal');
+    
+  } catch (error) {
+    alert('Gagal mengirim: ' + error.message);
+  } finally {
+    const btn = document.querySelector('#debtReportActions .btn.primary');
+    if (btn) {
+      btn.disabled = false;
+      btn.innerText = '📧 Kirim ke Email';
+    }
+  }
+}

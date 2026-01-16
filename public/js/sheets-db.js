@@ -135,5 +135,17 @@ const SheetsDB = {
   
   async getSummary(startDate, endDate) {
     return await this.apiCall('getSummary', { startDate, endDate });
+  },
+  
+  // ======================
+  // REPORT METHODS
+  // ======================
+  
+  async sendMonthlyReport(data) {
+    return await this.apiCall('sendMonthlyReport', data);
+  },
+  
+  async sendDebtReport(data) {
+    return await this.apiCall('sendDebtReport', data);
   }
 };
