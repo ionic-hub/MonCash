@@ -7,7 +7,7 @@ const CONFIG = {
   GOOGLE_CLIENT_ID: '549624092481-81f8u53hb3cjnbbt5ot68fihlnlvdvvl.apps.googleusercontent.com',
   
   // Google Apps Script Web App URL
-  SHEETS_API_URL: 'https://script.google.com/macros/s/AKfycbyiRreEYkKfPaD6p_yypH8xAtzOmuVos5cfNNMzyH0Uu5ih1C62XUBhlfNiRP80XOn1bw/exec',
+  SHEETS_API_URL: 'https://script.google.com/macros/s/AKfycbzNaH9tAP4OCmNtt9oxF44hiMZGYB52NgvDfsxPn6jyEX-tTXMHOww6G70_DLtzyLZoTw/exec',
   
   // Admin emails - hanya email ini yang bisa akses sebagai admin
   ADMIN_EMAILS: [
