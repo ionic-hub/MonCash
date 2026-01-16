@@ -169,7 +169,14 @@ function doGet(e) {
 
 function updateProfile(userId, data) {
   const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-  const sheet = ss.getSheetByName(SHEETS.USERS);
+  let sheet = ss.getSheetByName(SHEETS.USERS);
+  
+  // Create users sheet if not exists
+  if (!sheet) {
+    sheet = ss.insertSheet(SHEETS.USERS);
+    sheet.appendRow(['id', 'email', 'name', 'created_at']);
+  }
+  
   const users = getSheetData(SHEETS.USERS);
   
   const user = users.find(u => u.id === userId);

@@ -103,7 +103,8 @@
       
       // Save to Google Sheets
       try {
-        await fetch(CONFIG.SHEETS_API_URL, {
+        console.log('Syncing user to spreadsheet...');
+        const syncResponse = await fetch(CONFIG.SHEETS_API_URL, {
           method: 'POST',
           mode: 'cors',
           headers: { 'Content-Type': 'text/plain' },
@@ -114,8 +115,10 @@
             name: user.name
           })
         });
+        const syncResult = await syncResponse.text();
+        console.log('Sync result:', syncResult);
       } catch (e) {
-        console.log('Profile sync skipped:', e);
+        console.error('Profile sync error:', e);
       }
       
       // Redirect
