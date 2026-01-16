@@ -5,10 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Login - Dashboard Keuangan</title>
   <link rel="stylesheet" href="css/auth.css">
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script src="js/config.js"></script>
   <script src="js/sheets-db.js"></script>
-  <script src="js/auth-client.js"></script>
 </head>
 
 <body class="auth">
@@ -32,11 +30,28 @@
   <!-- RIGHT: FORM -->
   <div class="auth-form-side">
     <div class="auth-card">
-      <h2>Masuk</h2>
-      <p style="color: #64748b; margin-bottom: 24px;">Gunakan akun Google untuk masuk</p>
+      <h2>Selamat Datang!</h2>
+      <p style="color: #64748b; margin-bottom: 24px;">Masuk untuk mengelola keuangan Anda</p>
 
-      <!-- Google Sign-In Button -->
-      <div id="google-signin-button" style="display: flex; justify-content: center;"></div>
+      <!-- Loading indicator -->
+      <div id="loading-google" style="text-align: center; padding: 20px; color: #64748b;">
+        <div style="margin-bottom: 10px;">⏳</div>
+        Memuat Google Sign-In...
+      </div>
+
+      <!-- Google Sign-In Button Container -->
+      <div id="google-signin-button" style="display: flex; justify-content: center; min-height: 44px;"></div>
+
+      <!-- Fallback button if Google doesn't load -->
+      <button id="fallback-btn" class="btn-google" onclick="manualGoogleLogin()" style="display: none; margin-top: 16px;">
+        <svg width="20" height="20" viewBox="0 0 24 24">
+          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+        </svg>
+        Masuk dengan Google
+      </button>
 
       <p id="error" class="error-text"></p>
 
@@ -47,11 +62,142 @@
   </div>
 </div>
 
+<!-- Load Google Identity Services -->
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+
 <script>
   // Check if already logged in
-  if (checkAuth()) {
+  const storedUser = localStorage.getItem('moncash_user');
+  if (storedUser) {
     window.location.href = 'dashboard-static.html';
   }
+
+  // Parse JWT token
+  function parseJwt(token) {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+      return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+    }).join(''));
+    return JSON.parse(jsonPayload);
+  }
+
+  // Handle successful login
+  async function handleCredentialResponse(response) {
+    try {
+      document.getElementById('loading-google').style.display = 'block';
+      document.getElementById('loading-google').innerHTML = '<div style="margin-bottom: 10px;">⏳</div>Memproses login...';
+      
+      const payload = parseJwt(response.credential);
+      
+      const user = {
+        id: payload.sub,
+        name: payload.name,
+        email: payload.email,
+        picture: payload.picture,
+        isAdmin: CONFIG.ADMIN_EMAILS.includes(payload.email)
+      };
+      
+      // Save to localStorage
+      localStorage.setItem('moncash_user', JSON.stringify(user));
+      
+      // Save to Google Sheets
+      try {
+        await fetch(CONFIG.SHEETS_API_URL, {
+          method: 'POST',
+          mode: 'cors',
+          headers: { 'Content-Type': 'text/plain' },
+          body: JSON.stringify({
+            action: 'updateProfile',
+            userId: user.id,
+            userEmail: user.email,
+            name: user.name
+          })
+        });
+      } catch (e) {
+        console.log('Profile sync skipped:', e);
+      }
+      
+      // Redirect
+      window.location.href = 'dashboard-static.html';
+      
+    } catch (error) {
+      console.error('Login error:', error);
+      document.getElementById('error').textContent = 'Login gagal: ' + error.message;
+      document.getElementById('loading-google').style.display = 'none';
+    }
+  }
+
+  // Initialize Google Sign-In
+  let googleInitialized = false;
+  
+  function initGoogleSignIn() {
+    if (googleInitialized) return;
+    
+    if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
+      googleInitialized = true;
+      
+      google.accounts.id.initialize({
+        client_id: CONFIG.GOOGLE_CLIENT_ID,
+        callback: handleCredentialResponse,
+        auto_select: false,
+        cancel_on_tap_outside: true
+      });
+      
+      // Render the button
+      const buttonDiv = document.getElementById('google-signin-button');
+      google.accounts.id.renderButton(buttonDiv, {
+        theme: 'outline',
+        size: 'large',
+        width: 300,
+        text: 'signin_with',
+        shape: 'rectangular',
+        logo_alignment: 'center'
+      });
+      
+      // Hide loading, show button
+      document.getElementById('loading-google').style.display = 'none';
+      document.getElementById('fallback-btn').style.display = 'none';
+      
+      console.log('Google Sign-In initialized');
+    }
+  }
+
+  // Manual trigger for Google login (fallback)
+  function manualGoogleLogin() {
+    if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
+      google.accounts.id.prompt();
+    } else {
+      document.getElementById('error').textContent = 'Google Sign-In tidak tersedia. Coba refresh halaman.';
+    }
+  }
+
+  // Try to initialize multiple times
+  let attempts = 0;
+  const maxAttempts = 20;
+  
+  function tryInit() {
+    attempts++;
+    
+    if (typeof google !== 'undefined' && google.accounts) {
+      initGoogleSignIn();
+    } else if (attempts < maxAttempts) {
+      setTimeout(tryInit, 250);
+    } else {
+      // Show fallback after timeout
+      document.getElementById('loading-google').style.display = 'none';
+      document.getElementById('fallback-btn').style.display = 'flex';
+      document.getElementById('error').textContent = 'Google Sign-In lambat dimuat. Klik tombol di bawah untuk login.';
+    }
+  }
+
+  // Start initialization when DOM ready
+  document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(tryInit, 100);
+  });
+  
+  // Also try when Google script loads
+  window.onGoogleLibraryLoad = initGoogleSignIn;
 </script>
 
 </body>
