@@ -652,6 +652,139 @@ async function sendMonthlyReportEmail() {
   }
 }
 
+// Print monthly report
+function printMonthlyReport() {
+  if (!monthlyReportData) {
+    alert('Generate rekap terlebih dahulu');
+    return;
+  }
+  
+  const printContent = document.getElementById('monthlyReportPreview').innerHTML;
+  
+  const printWindow = window.open('', '_blank');
+  printWindow.document.write(`
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>Rekap Bulanan - ${monthlyReportData.month} ${monthlyReportData.year}</title>
+      <style>
+        * {
+          box-sizing: border-box;
+          font-family: 'Segoe UI', Arial, sans-serif;
+        }
+        body {
+          margin: 0;
+          padding: 20px;
+          background: white;
+          color: #1e293b;
+        }
+        .report-header {
+          text-align: center;
+          margin-bottom: 24px;
+          padding-bottom: 16px;
+          border-bottom: 3px solid #29AB87;
+        }
+        .report-header h2 {
+          margin: 0 0 8px;
+          color: #1e293b;
+          font-size: 24px;
+        }
+        .report-header p {
+          margin: 0;
+          color: #64748b;
+          font-size: 16px;
+        }
+        .report-summary {
+          display: flex;
+          gap: 16px;
+          margin-bottom: 20px;
+          flex-wrap: wrap;
+        }
+        .report-summary-item {
+          flex: 1;
+          min-width: 150px;
+          background: #f8fafc;
+          padding: 16px;
+          border-radius: 8px;
+          text-align: center;
+          border: 1px solid #e2e8f0;
+        }
+        .report-summary-item.income {
+          border-left: 4px solid #29AB87;
+        }
+        .report-summary-item.expense {
+          border-left: 4px solid #D5504E;
+        }
+        .report-summary-item.balance {
+          border-left: 4px solid #2563eb;
+        }
+        .report-summary-item label {
+          display: block;
+          font-size: 12px;
+          color: #64748b;
+          margin-bottom: 4px;
+        }
+        .report-summary-item strong {
+          font-size: 18px;
+          color: #1e293b;
+        }
+        .report-table {
+          width: 100%;
+          border-collapse: collapse;
+          font-size: 14px;
+          margin-bottom: 20px;
+        }
+        .report-table th,
+        .report-table td {
+          padding: 12px;
+          text-align: left;
+          border-bottom: 1px solid #e2e8f0;
+        }
+        .report-table th {
+          background: #f1f5f9;
+          font-weight: 600;
+          color: #475569;
+        }
+        .report-table .income {
+          color: #29AB87;
+        }
+        .report-table .expense {
+          color: #D5504E;
+        }
+        .report-footer {
+          text-align: center;
+          margin-top: 24px;
+          padding-top: 16px;
+          border-top: 1px solid #e2e8f0;
+          font-size: 12px;
+          color: #94a3b8;
+        }
+        @media print {
+          body {
+            padding: 0;
+          }
+          .report-summary-item {
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+          }
+        }
+      </style>
+    </head>
+    <body>
+      ${printContent}
+    </body>
+    </html>
+  `);
+  
+  printWindow.document.close();
+  
+  // Wait for content to load then print
+  printWindow.onload = function() {
+    printWindow.focus();
+    printWindow.print();
+  };
+}
+
 // ======================
 // DEBT REPORT
 // ======================
@@ -834,4 +967,138 @@ async function sendDebtReportEmail() {
       btn.innerText = '📧 Kirim ke Email';
     }
   }
+}
+
+// Print debt report
+function printDebtReport() {
+  if (!debtReportData) {
+    alert('Generate rekap terlebih dahulu');
+    return;
+  }
+  
+  const printContent = document.getElementById('debtReportPreview').innerHTML;
+  
+  const printWindow = window.open('', '_blank');
+  printWindow.document.write(`
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>Rekap Utang/Piutang - ${debtReportData.name}</title>
+      <style>
+        * {
+          box-sizing: border-box;
+          font-family: 'Segoe UI', Arial, sans-serif;
+        }
+        body {
+          margin: 0;
+          padding: 20px;
+          background: white;
+          color: #1e293b;
+        }
+        .report-header {
+          text-align: center;
+          margin-bottom: 24px;
+          padding-bottom: 16px;
+          border-bottom: 3px solid #29AB87;
+        }
+        .report-header h2 {
+          margin: 0 0 8px;
+          color: #1e293b;
+          font-size: 24px;
+        }
+        .report-header p {
+          margin: 0;
+          color: #64748b;
+          font-size: 16px;
+        }
+        .report-summary {
+          display: flex;
+          gap: 16px;
+          margin-bottom: 20px;
+          flex-wrap: wrap;
+        }
+        .report-summary-item {
+          flex: 1;
+          min-width: 150px;
+          background: #f8fafc;
+          padding: 16px;
+          border-radius: 8px;
+          text-align: center;
+          border: 1px solid #e2e8f0;
+        }
+        .report-summary-item.debt {
+          border-left: 4px solid #D5504E;
+        }
+        .report-summary-item.receivable {
+          border-left: 4px solid #29AB87;
+        }
+        .report-summary-item label {
+          display: block;
+          font-size: 12px;
+          color: #64748b;
+          margin-bottom: 4px;
+        }
+        .report-summary-item strong {
+          font-size: 18px;
+          color: #1e293b;
+        }
+        .report-table {
+          width: 100%;
+          border-collapse: collapse;
+          font-size: 14px;
+          margin-bottom: 20px;
+        }
+        .report-table th,
+        .report-table td {
+          padding: 12px;
+          text-align: left;
+          border-bottom: 1px solid #e2e8f0;
+        }
+        .report-table th {
+          background: #f1f5f9;
+          font-weight: 600;
+          color: #475569;
+        }
+        .report-table .debt {
+          color: #D5504E;
+        }
+        .report-table .receivable {
+          color: #29AB87;
+        }
+        .report-table .paid {
+          color: #94a3b8;
+          text-decoration: line-through;
+        }
+        .report-footer {
+          text-align: center;
+          margin-top: 24px;
+          padding-top: 16px;
+          border-top: 1px solid #e2e8f0;
+          font-size: 12px;
+          color: #94a3b8;
+        }
+        @media print {
+          body {
+            padding: 0;
+          }
+          .report-summary-item {
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+          }
+        }
+      </style>
+    </head>
+    <body>
+      ${printContent}
+    </body>
+    </html>
+  `);
+  
+  printWindow.document.close();
+  
+  // Wait for content to load then print
+  printWindow.onload = function() {
+    printWindow.focus();
+    printWindow.print();
+  };
 }
