@@ -153,28 +153,42 @@ async function loadTransactions() {
     list.innerHTML = '';
 
     if (!transactions || transactions.length === 0) {
-      list.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:20px;">Belum ada transaksi</div>';
+      list.innerHTML = '<li style="text-align:center;color:#94a3b8;padding:20px;list-style:none;">Belum ada transaksi</li>';
       return;
     }
 
+    // Calculate summary
+    let trxIncome = 0, trxExpense = 0;
+    
     transactions.forEach(t => {
       const isIncome = t.type === 'income';
-      const div = document.createElement('div');
-      div.className = 'list-item';
-      div.innerHTML = `
-        <div class="item-icon ${isIncome ? 'income' : 'expense'}">${isIncome ? '↓' : '↑'}</div>
-        <div class="item-info">
-          <div class="item-title">${t.description || 'Transaksi'}</div>
-          <div class="item-subtitle">${formatDate(t.date)}</div>
+      const amount = parseFloat(t.amount) || 0;
+      
+      if (isIncome) trxIncome += amount;
+      else trxExpense += amount;
+      
+      const li = document.createElement('li');
+      li.className = isIncome ? 'income' : 'expense';
+      li.innerHTML = `
+        <div class="trx-info">
+          <span class="trx-title">${t.description || 'Transaksi'}</span>
+          <span class="trx-date">${formatDate(t.date)}</span>
         </div>
-        <div class="item-amount ${isIncome ? 'income' : 'expense'}">${isIncome ? '+' : '-'}Rp ${formatNumber(t.amount)}</div>
-        <div class="item-actions">
-          <button class="btn-icon" onclick="openEditTransaction('${t.id}', '${t.type}', ${t.amount}, '${t.description || ''}', '${t.date || ''}')">✏️</button>
-          <button class="btn-icon" onclick="deleteTransaction('${t.id}')">🗑️</button>
+        <div class="trx-right">
+          <span class="trx-amount ${isIncome ? 'income' : 'expense'}">${isIncome ? '+' : '-'}Rp ${formatNumber(amount)}</span>
+          <div class="trx-actions">
+            <button class="btn icon" onclick="openEditTransaction('${t.id}', '${t.type}', ${amount}, '${(t.description || '').replace(/'/g, "\\'")}', '${t.date || ''}')">✏️</button>
+            <button class="btn icon" onclick="deleteTransaction('${t.id}')">🗑️</button>
+          </div>
         </div>
       `;
-      list.appendChild(div);
+      list.appendChild(li);
     });
+    
+    // Update summary
+    document.getElementById('trxIncome').innerText = formatNumber(trxIncome);
+    document.getElementById('trxExpense').innerText = formatNumber(trxExpense);
+    
   } catch (error) {
     console.error('Load transactions error:', error);
   }
@@ -196,26 +210,40 @@ async function loadDebts() {
       return;
     }
 
+    // Calculate totals
+    let totalDebt = 0, totalReceivable = 0;
+
     debts.forEach(d => {
       const isDebt = d.type === 'debt';
       const isPaid = d.status === 'paid';
+      const amount = parseFloat(d.amount) || 0;
+      
+      if (!isPaid) {
+        if (isDebt) totalDebt += amount;
+        else totalReceivable += amount;
+      }
+      
       const div = document.createElement('div');
-      div.className = 'list-item' + (isPaid ? ' paid' : '');
+      div.className = `debt-item ${isDebt ? 'debt' : 'receivable'}` + (isPaid ? ' paid' : '');
       div.innerHTML = `
-        <div class="item-icon ${isDebt ? 'expense' : 'income'}">${isDebt ? '📤' : '📥'}</div>
-        <div class="item-info">
-          <div class="item-title">${d.name} ${isPaid ? '<span class="status-badge paid">Lunas</span>' : ''}</div>
-          <div class="item-subtitle">${isDebt ? 'Utang' : 'Piutang'} • ${d.due_date ? 'Jatuh tempo: ' + formatDate(d.due_date) : 'Tanpa jatuh tempo'}</div>
+        <div class="debt-header">
+          <span class="debt-name">${d.name} ${isPaid ? '<span class="debt-status">Lunas</span>' : ''}</span>
+          <span class="debt-amount"><span>Rp</span> ${formatNumber(amount)}</span>
         </div>
-        <div class="item-amount ${isDebt ? 'expense' : 'income'}">Rp ${formatNumber(d.amount)}</div>
-        <div class="item-actions">
-          ${!isPaid ? `<button class="btn-icon" onclick="markDebtPaid('${d.id}')" title="Tandai Lunas">✅</button>` : ''}
-          <button class="btn-icon" onclick="openEditDebt('${d.id}', '${d.type}', '${d.name}', ${d.amount}, '${d.due_date || ''}')">✏️</button>
-          <button class="btn-icon" onclick="deleteDebt('${d.id}')">🗑️</button>
+        <div class="debt-due">${isDebt ? 'Utang' : 'Piutang'} • ${d.due_date ? 'Jatuh tempo: ' + formatDate(d.due_date) : 'Tanpa jatuh tempo'}</div>
+        <div class="debt-actions">
+          ${!isPaid ? `<button class="btn-lunas" onclick="markDebtPaid('${d.id}')">Tandai Lunas</button>` : '<button class="btn-lunas paid" disabled>Sudah Lunas</button>'}
+          <button class="btn icon" onclick="openEditDebt('${d.id}', '${d.type}', '${(d.name || '').replace(/'/g, "\\'")}', ${amount}, '${d.due_date || ''}')">✏️</button>
+          <button class="btn icon" onclick="deleteDebt('${d.id}')">🗑️</button>
         </div>
       `;
       list.appendChild(div);
     });
+    
+    // Update totals
+    document.getElementById('totalDebt').innerText = formatNumber(totalDebt);
+    document.getElementById('totalReceivable').innerText = formatNumber(totalReceivable);
+    
   } catch (error) {
     console.error('Load debts error:', error);
   }

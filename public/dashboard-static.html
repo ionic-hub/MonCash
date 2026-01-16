@@ -9,26 +9,6 @@
   <script src="js/config.js"></script>
   <script src="js/sheets-db.js"></script>
   <script src="js/auth-client.js"></script>
-  <style>
-    .admin-badge {
-      background: #2563eb;
-      color: white;
-      padding: 2px 8px;
-      border-radius: 4px;
-      font-size: 11px;
-      margin-left: 8px;
-    }
-    .status-badge.paid {
-      background: #29AB87;
-      color: white;
-      padding: 2px 6px;
-      border-radius: 4px;
-      font-size: 11px;
-    }
-    .list-item.paid {
-      opacity: 0.6;
-    }
-  </style>
 </head>
 <body>
 
@@ -65,86 +45,106 @@
   <section class="filter-section">
     <span class="filter-label">Filter Periode</span>
     <div class="filter-buttons">
-      <button class="filter-btn" data-filter="today">Hari Ini</button>
-      <button class="filter-btn" data-filter="week">7 Hari Terakhir</button>
-      <button class="filter-btn active" data-filter="month">Bulan Ini</button>
+      <button class="filter-btn" data-filter="today" onclick="setFilter('today')">Hari Ini</button>
+      <button class="filter-btn" data-filter="week" onclick="setFilter('week')">7 Hari Terakhir</button>
+      <button class="filter-btn active" data-filter="month" onclick="setFilter('month')">Bulan Ini</button>
     </div>
   </section>
 
   <!-- RINGKASAN -->
   <section class="summary-section">
-    <h3 id="summaryTitle">Ringkasan Bulan Ini</h3>
-    <div class="summary-grid">
-      <!-- Chart Card -->
-      <div class="card chart-card">
-        <div class="chart-container">
-          <canvas id="pieChart"></canvas>
-          <div class="chart-center">
-            <span class="label">Net</span>
-            <span class="value" id="net">0</span>
-          </div>
-        </div>
-        <div class="chart-legends">
-          <div class="legend-item">
-            <span class="dot income"></span>
-            <span>Pemasukan</span>
-            <span id="incomePercent">0%</span>
-          </div>
-          <div class="legend-item">
-            <span class="dot expense"></span>
-            <span>Pengeluaran</span>
-            <span id="expensePercent">0%</span>
-          </div>
-        </div>
+    <h3 class="section-title" id="summaryTitle">Ringkasan Bulan Ini</h3>
+    <div class="summary">
+      <div class="chart-wrapper">
+        <canvas id="pieChart"></canvas>
       </div>
-      <!-- Income Card -->
-      <div class="card stat-card income-card">
-        <div class="stat-icon">↓</div>
-        <div class="stat-info">
-          <span class="stat-label">Pemasukan</span>
-          <span class="stat-value" id="income">0</span>
+      <div class="summary-right">
+        <div class="summary-card green">
+          <div class="summary-icon">📈</div>
+          <div class="summary-info">
+            <span class="summary-label">Uang Masuk</span>
+            <strong class="summary-value"><span>Rp</span> <span id="income">0</span></strong>
+          </div>
+          <span class="summary-percent" id="incomePercent">0%</span>
         </div>
-      </div>
-      <!-- Expense Card -->
-      <div class="card stat-card expense-card">
-        <div class="stat-icon">↑</div>
-        <div class="stat-info">
-          <span class="stat-label">Pengeluaran</span>
-          <span class="stat-value" id="expense">0</span>
+
+        <div class="summary-card red">
+          <div class="summary-icon">📉</div>
+          <div class="summary-info">
+            <span class="summary-label">Uang Keluar</span>
+            <strong class="summary-value red-text"><span>Rp</span> <span id="expense">0</span></strong>
+          </div>
+          <span class="summary-percent" id="expensePercent">0%</span>
+        </div>
+
+        <div class="summary-card blue">
+          <div class="summary-info">
+            <span class="summary-label">Saldo Bersih</span>
+            <strong class="summary-value"><span>Rp</span> <span id="net">0</span></strong>
+          </div>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- TRANSACTIONS & DEBTS -->
-  <section class="data-section">
-    <!-- TRANSACTIONS -->
-    <div class="card list-card">
+  <!-- MAIN CONTENT -->
+  <section class="main">
+
+    <!-- TRANSAKSI -->
+    <div class="card">
       <div class="card-header">
-        <h4>📊 Transaksi</h4>
-        <button class="btn small" onclick="openAddTransaction()">+ Tambah</button>
+        <strong>Transaksi</strong>
+        <button class="btn primary" onclick="openAddTransaction()">+ Tambah</button>
       </div>
-      <div class="subheader">
-        <span>Pemasukan: <strong id="trxIncome">0</strong></span>
-        <span>Pengeluaran: <strong id="trxExpense">0</strong></span>
+      
+      <!-- Summary Boxes -->
+      <div class="card-summary">
+        <div class="mini-card green">
+          <div class="mini-icon">📈</div>
+          <span class="mini-label">Uang Masuk</span>
+          <strong class="mini-value green-text"><span>Rp</span> <span id="trxIncome">0</span></strong>
+        </div>
+        <div class="mini-card red">
+          <div class="mini-icon">📉</div>
+          <span class="mini-label">Uang Keluar</span>
+          <strong class="mini-value red-text"><span>Rp</span> <span id="trxExpense">0</span></strong>
+        </div>
       </div>
-      <div class="list-content" id="transactionList">
-        <!-- Transactions will be loaded here -->
+
+      <!-- Scrollable Transaction List -->
+      <div class="scroll-container" id="transactionScroll">
+        <ul class="trx-list" id="transactionList"></ul>
       </div>
     </div>
 
-    <!-- DEBTS -->
-    <div class="card list-card">
+    <!-- UTANG & PIUTANG -->
+    <div class="card">
       <div class="card-header">
-        <h4>💳 Utang & Piutang</h4>
-        <button class="btn small" onclick="openAddDebt()">+ Tambah</button>
+        <strong>Utang & Piutang</strong>
+        <button class="btn primary" onclick="openAddDebt()">+ Tambah</button>
       </div>
-      <div class="list-content" id="debtList">
-        <!-- Debts will be loaded here -->
+
+      <!-- Summary Boxes -->
+      <div class="card-summary">
+        <div class="mini-card red">
+          <div class="mini-icon">📋</div>
+          <span class="mini-label">Total Utang</span>
+          <strong class="mini-value red-text"><span>Rp</span> <span id="totalDebt">0</span></strong>
+        </div>
+        <div class="mini-card green">
+          <div class="mini-icon">📋</div>
+          <span class="mini-label">Total Piutang</span>
+          <strong class="mini-value green-text"><span>Rp</span> <span id="totalReceivable">0</span></strong>
+        </div>
+      </div>
+
+      <!-- Scrollable Debt List -->
+      <div class="scroll-container" id="debtScroll">
+        <div id="debtList"></div>
       </div>
     </div>
+
   </section>
-
 </div>
 
 <!-- TRANSACTION MODAL -->
@@ -152,18 +152,18 @@
   <div class="modal-box">
     <strong id="modalTitle">Tambah Transaksi</strong>
 
-    <label>Jenis</label>
+    <label>Tipe</label>
     <select id="trxType">
-      <option value="income">Pemasukan</option>
-      <option value="expense">Pengeluaran</option>
+      <option value="income">Uang Masuk</option>
+      <option value="expense">Uang Keluar</option>
     </select>
 
     <label>Jumlah</label>
-    <input id="trxAmount" type="number" placeholder="0" />
-
-    <label>Catatan</label>
-    <input id="trxNote" placeholder="Keterangan" />
-
+    <input id="trxAmount" type="number" placeholder="Jumlah" />
+    
+    <label>Deskripsi</label>
+    <input id="trxNote" placeholder="Deskripsi" />
+    
     <label>Tanggal</label>
     <input id="trxDate" type="date" />
 
@@ -177,20 +177,20 @@
 <!-- DEBT MODAL -->
 <div class="modal hidden" id="debtModal">
   <div class="modal-box">
-    <strong id="debtModalTitle">Tambah Utang/Piutang</strong>
+    <strong id="debtModalTitle">Tambah Utang / Piutang</strong>
 
-    <label>Jenis</label>
+    <label>Tipe</label>
     <select id="debtType">
-      <option value="debt">Utang (Saya berhutang)</option>
-      <option value="receivable">Piutang (Orang berhutang ke saya)</option>
+      <option value="debt">Utang</option>
+      <option value="receivable">Piutang</option>
     </select>
 
     <label>Nama</label>
-    <input id="debtName" placeholder="Nama orang" />
-
+    <input id="debtName" placeholder="Nama orang/instansi" />
+    
     <label>Jumlah</label>
-    <input id="debtAmount" type="number" placeholder="0" />
-
+    <input id="debtAmount" type="number" placeholder="Jumlah" />
+    
     <label>Jatuh Tempo</label>
     <input id="debtDueDate" type="date" />
 
