@@ -680,6 +680,46 @@ body {
 .debt-item.debt .debt-amount { color: #D5504E; }
 .debt-item.receivable .debt-amount { color: #29AB87; }
 
+/* Progress bar for debt payments */
+.debt-progress-info {
+  margin: 8px 0;
+}
+
+.debt-progress-bar {
+  height: 8px;
+  background: #e2e8f0;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+
+.debt-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #29AB87, #34d399);
+  border-radius: 4px;
+  transition: width 0.5s ease;
+}
+
+.debt-item.debt .debt-progress-fill {
+  background: linear-gradient(90deg, #D5504E, #f87171);
+}
+
+.debt-progress-text {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.debt-remaining {
+  font-weight: 600;
+  color: #D5504E;
+}
+
+.debt-remaining.paid {
+  color: #29AB87;
+}
+
 .debt-due {
   font-size: 12px;
   color: #94a3b8;
@@ -689,11 +729,29 @@ body {
 .debt-actions {
   display: flex;
   gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* Payment button */
+.btn-payment {
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: none;
+  background: #2563eb;
+  color: white;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-payment:hover {
+  background: #1d4ed8;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
 }
 
 .btn-lunas {
-  flex: 1;
-  padding: 10px;
+  padding: 8px 14px;
   border-radius: 8px;
   border: none;
   background: #1e293b;

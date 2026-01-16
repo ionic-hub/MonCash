@@ -201,7 +201,62 @@
 
     <div class="modal-actions">
       <button class="btn" onclick="closeModal('debtModal')">Batal</button>
-      <button class="btn primary" onclick="saveDebt()">Simpan</button>
+      <button class="btn primary btn-save" onclick="saveDebt()">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- PAYMENT MODAL (Cicilan) -->
+<div class="modal hidden" id="paymentModal">
+  <div class="modal-box">
+    <strong>💵 Bayar Sebagian (Cicilan)</strong>
+    
+    <div class="payment-info-box">
+      <div class="payment-info-row">
+        <span>Nama:</span>
+        <strong id="paymentDebtName">-</strong>
+      </div>
+      <div class="payment-info-row">
+        <span>Jumlah Awal:</span>
+        <span id="paymentOriginalAmount">Rp 0</span>
+      </div>
+      <div class="payment-info-row">
+        <span>Sudah Dibayar:</span>
+        <span class="green-text" id="paymentPaidAmount">Rp 0</span>
+      </div>
+      <div class="payment-info-row highlight">
+        <span>Sisa:</span>
+        <strong class="red-text" id="paymentRemaining">Rp 0</strong>
+      </div>
+    </div>
+
+    <label>Jumlah Pembayaran</label>
+    <input id="paymentAmount" type="number" placeholder="Masukkan jumlah" />
+    
+    <label>Catatan (opsional)</label>
+    <input id="paymentNote" placeholder="Mis: Cicilan ke-1" />
+    
+    <label>Tanggal</label>
+    <input id="paymentDate" type="date" />
+
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal('paymentModal')">Batal</button>
+      <button class="btn primary btn-save" onclick="savePayment()">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- PAYMENT HISTORY MODAL -->
+<div class="modal hidden" id="paymentHistoryModal">
+  <div class="modal-box modal-large">
+    <strong>📋 History Pembayaran</strong>
+    
+    <div id="paymentHistoryContent">
+      <!-- Content will be rendered here -->
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal('paymentHistoryModal')">Tutup</button>
     </div>
   </div>
 </div>

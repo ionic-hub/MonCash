@@ -130,6 +130,22 @@ const SheetsDB = {
   },
   
   // ======================
+  // DEBT PAYMENTS (Cicilan)
+  // ======================
+  
+  async getDebtPayments(debtId) {
+    return await this.apiCall('getDebtPayments', { debtId });
+  },
+  
+  async addDebtPayment(data) {
+    return await this.apiCall('addDebtPayment', data);
+  },
+  
+  async deleteDebtPayment(id) {
+    return await this.apiCall('deleteDebtPayment', { id });
+  },
+  
+  // ======================
   // SUMMARY METHODS
   // ======================
   

@@ -20,7 +20,8 @@ const SPREADSHEET_ID = '1WB1dPveW2OLfqLWBzrCzKT4oLjWSf4dY0xiX86iB5NA';
 const SHEETS = {
   USERS: 'users',
   TRANSACTIONS: 'transactions',
-  DEBTS: 'debts'
+  DEBTS: 'debts',
+  DEBT_PAYMENTS: 'debt_payments'
 };
 
 // Initialize sheets if not exist
@@ -46,6 +47,13 @@ function initSheets() {
   if (!debtsSheet) {
     debtsSheet = ss.insertSheet(SHEETS.DEBTS);
     debtsSheet.appendRow(['id', 'user_id', 'type', 'name', 'amount', 'due_date', 'status', 'created_at']);
+  }
+  
+  // Debt Payments sheet (for tracking partial payments/cicilan)
+  let paymentsSheet = ss.getSheetByName(SHEETS.DEBT_PAYMENTS);
+  if (!paymentsSheet) {
+    paymentsSheet = ss.insertSheet(SHEETS.DEBT_PAYMENTS);
+    paymentsSheet.appendRow(['id', 'debt_id', 'user_id', 'amount', 'note', 'date', 'created_at']);
   }
 }
 
@@ -135,6 +143,17 @@ function doPost(e) {
         break;
       case 'deleteDebt':
         result = deleteDebt(userId, payload.id);
+        break;
+      
+      // Debt Payments (Cicilan)
+      case 'getDebtPayments':
+        result = getDebtPayments(userId, payload.debtId);
+        break;
+      case 'addDebtPayment':
+        result = addDebtPayment(userId, payload);
+        break;
+      case 'deleteDebtPayment':
+        result = deleteDebtPayment(userId, payload.id);
         break;
         
       // Summary
@@ -282,8 +301,24 @@ function deleteTransaction(userId, id) {
 // ======================
 
 function getDebts(userId) {
-  const data = getSheetData(SHEETS.DEBTS);
-  return data.filter(d => d.user_id === userId);
+  const debts = getSheetData(SHEETS.DEBTS).filter(d => d.user_id === userId);
+  const allPayments = getSheetData(SHEETS.DEBT_PAYMENTS).filter(p => p.user_id === userId);
+  
+  // Add paid_amount and remaining to each debt
+  return debts.map(debt => {
+    const debtPayments = allPayments.filter(p => p.debt_id === debt.id);
+    const paidAmount = debtPayments.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
+    const originalAmount = parseFloat(debt.amount) || 0;
+    const remaining = Math.max(0, originalAmount - paidAmount);
+    
+    return {
+      ...debt,
+      original_amount: originalAmount,
+      paid_amount: paidAmount,
+      remaining: remaining,
+      payments: debtPayments
+    };
+  });
 }
 
 function addDebt(userId, data) {
@@ -349,7 +384,100 @@ function deleteDebt(userId, id) {
   
   sheet.deleteRow(row._rowIndex);
   
+  // Also delete related payments
+  const paymentsSheet = ss.getSheetByName(SHEETS.DEBT_PAYMENTS);
+  if (paymentsSheet) {
+    const paymentsData = paymentsSheet.getDataRange().getValues();
+    // Delete from bottom to top to avoid index shifting
+    for (let i = paymentsData.length - 1; i > 0; i--) {
+      if (paymentsData[i][1] === id) { // debt_id column
+        paymentsSheet.deleteRow(i + 1);
+      }
+    }
+  }
+  
   return { success: true };
+}
+
+// ======================
+// DEBT PAYMENTS FUNCTIONS (Cicilan)
+// ======================
+
+function getDebtPayments(userId, debtId) {
+  const data = getSheetData(SHEETS.DEBT_PAYMENTS);
+  if (debtId) {
+    return data.filter(p => p.user_id === userId && p.debt_id === debtId);
+  }
+  return data.filter(p => p.user_id === userId);
+}
+
+function addDebtPayment(userId, data) {
+  // Verify debt exists and belongs to user
+  const debt = findRowById(SHEETS.DEBTS, data.debtId);
+  if (!debt || debt.user_id !== userId) {
+    throw new Error('Debt not found');
+  }
+  
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const sheet = ss.getSheetByName(SHEETS.DEBT_PAYMENTS);
+  
+  // Create sheet if not exists
+  if (!sheet) {
+    initSheets();
+  }
+  
+  const paymentsSheet = ss.getSheetByName(SHEETS.DEBT_PAYMENTS);
+  const id = generateId();
+  
+  paymentsSheet.appendRow([
+    id,
+    data.debtId,
+    userId,
+    data.amount,
+    data.note || '',
+    data.date || new Date().toISOString().split('T')[0],
+    new Date().toISOString()
+  ]);
+  
+  // Check if fully paid and auto-update status
+  const payments = getDebtPayments(userId, data.debtId);
+  const totalPaid = payments.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0) + parseFloat(data.amount);
+  const originalAmount = parseFloat(debt.amount) || 0;
+  
+  if (totalPaid >= originalAmount) {
+    updateDebtStatus(userId, data.debtId, 'paid');
+  }
+  
+  return { id, success: true, totalPaid };
+}
+
+function deleteDebtPayment(userId, id) {
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const sheet = ss.getSheetByName(SHEETS.DEBT_PAYMENTS);
+  
+  if (!sheet) {
+    throw new Error('Payment not found');
+  }
+  
+  const data = sheet.getDataRange().getValues();
+  const headers = data[0];
+  
+  for (let i = 1; i < data.length; i++) {
+    if (data[i][0] === id && data[i][2] === userId) { // id and user_id
+      const debtId = data[i][1];
+      sheet.deleteRow(i + 1);
+      
+      // Revert debt status to pending if was paid
+      const debt = findRowById(SHEETS.DEBTS, debtId);
+      if (debt && debt.status === 'paid') {
+        updateDebtStatus(userId, debtId, 'pending');
+      }
+      
+      return { success: true };
+    }
+  }
+  
+  throw new Error('Payment not found');
 }
 
 // ======================

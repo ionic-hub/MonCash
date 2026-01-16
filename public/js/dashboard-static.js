@@ -4,6 +4,7 @@ let editDebtId = null;
 let currentFilter = 'month';
 let currentUser = null;
 let isSaving = false; // Prevent double-click
+let currentPaymentDebtId = null; // For payment modal
 
 // Format number with thousand separator
 function formatNumber(num) {
@@ -211,37 +212,60 @@ async function loadDebts() {
       return;
     }
 
-    // Calculate totals
+    // Calculate totals (remaining amounts)
     let totalDebt = 0, totalReceivable = 0;
 
     debts.forEach(d => {
       const isDebt = d.type === 'debt';
       const isPaid = d.status === 'paid';
-      const amount = parseFloat(d.amount) || 0;
+      const originalAmount = parseFloat(d.original_amount) || parseFloat(d.amount) || 0;
+      const paidAmount = parseFloat(d.paid_amount) || 0;
+      const remaining = parseFloat(d.remaining) || (originalAmount - paidAmount);
       
       if (!isPaid) {
-        if (isDebt) totalDebt += amount;
-        else totalReceivable += amount;
+        if (isDebt) totalDebt += remaining;
+        else totalReceivable += remaining;
       }
+      
+      const hasPayments = paidAmount > 0;
+      const progressPercent = originalAmount > 0 ? Math.round((paidAmount / originalAmount) * 100) : 0;
       
       const div = document.createElement('div');
       div.className = `debt-item ${isDebt ? 'debt' : 'receivable'}` + (isPaid ? ' paid' : '');
       div.innerHTML = `
         <div class="debt-header">
           <span class="debt-name">${d.name} ${isPaid ? '<span class="debt-status">Lunas</span>' : ''}</span>
-          <span class="debt-amount"><span>Rp</span> ${formatNumber(amount)}</span>
+          <span class="debt-amount"><span>Rp</span> ${formatNumber(originalAmount)}</span>
         </div>
+        
+        ${hasPayments || !isPaid ? `
+        <div class="debt-progress-info">
+          <div class="debt-progress-bar">
+            <div class="debt-progress-fill" style="width: ${progressPercent}%"></div>
+          </div>
+          <div class="debt-progress-text">
+            <span>Dibayar: Rp ${formatNumber(paidAmount)}</span>
+            <span class="debt-remaining ${remaining > 0 ? '' : 'paid'}">Sisa: Rp ${formatNumber(remaining)}</span>
+          </div>
+        </div>
+        ` : ''}
+        
         <div class="debt-due">${isDebt ? 'Utang' : 'Piutang'} • ${d.due_date ? 'Jatuh tempo: ' + formatDate(d.due_date) : 'Tanpa jatuh tempo'}</div>
+        
         <div class="debt-actions">
-          ${!isPaid ? `<button class="btn-lunas" onclick="markDebtPaid('${d.id}')">Tandai Lunas</button>` : '<button class="btn-lunas paid" disabled>Sudah Lunas</button>'}
-          <button class="btn icon" onclick="openEditDebt('${d.id}', '${d.type}', '${(d.name || '').replace(/'/g, "\\'")}', ${amount}, '${d.due_date || ''}')">✏️</button>
-          <button class="btn icon" onclick="deleteDebt('${d.id}')">🗑️</button>
+          ${!isPaid ? `
+            <button class="btn-payment" onclick="openPaymentModal('${d.id}', '${(d.name || '').replace(/'/g, "\\'")}', ${originalAmount}, ${paidAmount})">+ Bayar</button>
+            <button class="btn-lunas" onclick="markDebtPaid('${d.id}')">✓ Lunas</button>
+          ` : '<button class="btn-lunas paid" disabled>Sudah Lunas</button>'}
+          <button class="btn-icon" onclick="openPaymentHistory('${d.id}', '${(d.name || '').replace(/'/g, "\\'")}')">📋</button>
+          <button class="btn-icon" onclick="openEditDebt('${d.id}', '${d.type}', '${(d.name || '').replace(/'/g, "\\'")}', ${originalAmount}, '${d.due_date || ''}')">✏️</button>
+          <button class="btn-icon" onclick="deleteDebt('${d.id}')">🗑️</button>
         </div>
       `;
       list.appendChild(div);
     });
     
-    // Update totals
+    // Update totals (now showing remaining amounts)
     document.getElementById('totalDebt').innerText = formatNumber(totalDebt);
     document.getElementById('totalReceivable').innerText = formatNumber(totalReceivable);
     
@@ -403,10 +427,138 @@ async function markDebtPaid(id) {
 }
 
 async function deleteDebt(id) {
-  if (!confirm('Hapus data ini?')) return;
+  if (!confirm('Hapus data ini? Semua history pembayaran juga akan dihapus.')) return;
   
   try {
     await SheetsDB.deleteDebt(id);
+    loadDebts();
+  } catch (error) {
+    alert('Gagal menghapus: ' + error.message);
+  }
+}
+
+// ======================
+// DEBT PAYMENT (Cicilan)
+// ======================
+
+function openPaymentModal(debtId, name, originalAmount, paidAmount) {
+  currentPaymentDebtId = debtId;
+  const remaining = originalAmount - paidAmount;
+  
+  document.getElementById('paymentDebtName').innerText = name;
+  document.getElementById('paymentOriginalAmount').innerText = `Rp ${formatNumber(originalAmount)}`;
+  document.getElementById('paymentPaidAmount').innerText = `Rp ${formatNumber(paidAmount)}`;
+  document.getElementById('paymentRemaining').innerText = `Rp ${formatNumber(remaining)}`;
+  
+  document.getElementById('paymentAmount').value = '';
+  document.getElementById('paymentAmount').max = remaining;
+  document.getElementById('paymentNote').value = '';
+  document.getElementById('paymentDate').value = new Date().toISOString().split('T')[0];
+  
+  document.getElementById('paymentModal').classList.remove('hidden');
+}
+
+async function savePayment() {
+  if (isSaving) return;
+  
+  const amount = parseFloat(document.getElementById('paymentAmount').value);
+  const note = document.getElementById('paymentNote').value;
+  const date = document.getElementById('paymentDate').value;
+  
+  if (!amount || amount <= 0) {
+    alert('Masukkan jumlah pembayaran yang valid');
+    return;
+  }
+  
+  isSaving = true;
+  const saveBtn = document.querySelector('#paymentModal .btn-save');
+  if (saveBtn) {
+    saveBtn.disabled = true;
+    saveBtn.innerText = 'Menyimpan...';
+  }
+  
+  try {
+    await SheetsDB.addDebtPayment({
+      debtId: currentPaymentDebtId,
+      amount: amount,
+      note: note,
+      date: date
+    });
+    
+    closeModal('paymentModal');
+    loadDebts();
+  } catch (error) {
+    alert('Gagal menyimpan: ' + error.message);
+  } finally {
+    isSaving = false;
+    if (saveBtn) {
+      saveBtn.disabled = false;
+      saveBtn.innerText = 'Simpan';
+    }
+  }
+}
+
+async function openPaymentHistory(debtId, name) {
+  try {
+    const debts = await SheetsDB.getDebts();
+    const debt = debts.find(d => d.id === debtId);
+    
+    if (!debt) {
+      alert('Data tidak ditemukan');
+      return;
+    }
+    
+    const payments = debt.payments || [];
+    const originalAmount = parseFloat(debt.original_amount) || parseFloat(debt.amount) || 0;
+    const paidAmount = parseFloat(debt.paid_amount) || 0;
+    const remaining = originalAmount - paidAmount;
+    
+    let html = `
+      <div class="payment-history-header">
+        <h3>${name}</h3>
+        <p>Jumlah Awal: <strong>Rp ${formatNumber(originalAmount)}</strong></p>
+        <p>Sudah Dibayar: <strong class="green-text">Rp ${formatNumber(paidAmount)}</strong></p>
+        <p>Sisa: <strong class="${remaining > 0 ? 'red-text' : 'green-text'}">Rp ${formatNumber(remaining)}</strong></p>
+      </div>
+      <div class="payment-history-list">
+    `;
+    
+    if (payments.length === 0) {
+      html += '<p style="text-align:center;color:#94a3b8;padding:20px;">Belum ada pembayaran</p>';
+    } else {
+      payments.sort((a, b) => new Date(b.date) - new Date(a.date));
+      payments.forEach(p => {
+        html += `
+          <div class="payment-history-item">
+            <div class="payment-history-info">
+              <span class="payment-history-date">${formatDate(p.date)}</span>
+              <span class="payment-history-note">${p.note || '-'}</span>
+            </div>
+            <div class="payment-history-amount">
+              <span>Rp ${formatNumber(parseFloat(p.amount) || 0)}</span>
+              <button class="btn-icon small" onclick="deletePayment('${p.id}')">🗑️</button>
+            </div>
+          </div>
+        `;
+      });
+    }
+    
+    html += '</div>';
+    
+    document.getElementById('paymentHistoryContent').innerHTML = html;
+    document.getElementById('paymentHistoryModal').classList.remove('hidden');
+    
+  } catch (error) {
+    alert('Gagal memuat history: ' + error.message);
+  }
+}
+
+async function deletePayment(id) {
+  if (!confirm('Hapus pembayaran ini?')) return;
+  
+  try {
+    await SheetsDB.deleteDebtPayment(id);
+    closeModal('paymentHistoryModal');
     loadDebts();
   } catch (error) {
     alert('Gagal menghapus: ' + error.message);
