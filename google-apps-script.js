@@ -393,7 +393,17 @@ function formatDateForEmail(dateStr) {
 }
 
 function sendMonthlyReport(userEmail, data) {
-  const { month, year, income, expense, balance, transactions } = data;
+  // Handle undefined data
+  if (!data) {
+    throw new Error('Data tidak boleh kosong');
+  }
+  
+  const month = data.month || 'Unknown';
+  const year = data.year || new Date().getFullYear();
+  const income = data.income || 0;
+  const expense = data.expense || 0;
+  const balance = data.balance || 0;
+  const transactions = data.transactions || [];
   
   // Build email HTML
   let transactionRows = '';
@@ -472,7 +482,17 @@ function sendMonthlyReport(userEmail, data) {
 }
 
 function sendDebtReport(userEmail, data) {
-  const { name, debts, totalDebt, totalReceivable, unpaidDebt, unpaidReceivable } = data;
+  // Handle undefined data
+  if (!data) {
+    throw new Error('Data tidak boleh kosong');
+  }
+  
+  const name = data.name || 'Unknown';
+  const debts = data.debts || [];
+  const totalDebt = data.totalDebt || 0;
+  const totalReceivable = data.totalReceivable || 0;
+  const unpaidDebt = data.unpaidDebt || 0;
+  const unpaidReceivable = data.unpaidReceivable || 0;
   
   // Build email HTML
   let debtRows = '';
